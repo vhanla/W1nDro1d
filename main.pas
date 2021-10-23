@@ -95,6 +95,9 @@ type
     function GetWSAInstallationPath(amui: string): string;
 
     function ReplaceAmazonAppstore: Boolean;
+    function IsValidAppPackageName(value: string): Boolean;
+    { TODO : In Progress, Shell:AppsFolder items can resolve to lnk files at Shell:Programs directory, we need to do that }
+    function IsWsaClientLnkTarget(value: string): Boolean;
   private
     { Private declarations }
     WSA: TWSA;
@@ -278,7 +281,7 @@ begin
 //          MonInfo.rcMonitor.Top, 
 //          MonInfo.rcMonitor.Width, 
 //          MonInfo.rcMonitor.Height,
-//          SWP_NOMOVE or SWP_FRAMECHANGED or SWP_NOACTIVATE);        
+//          SWP_NOMOVE or SWP_FRAMECHANGED or SWP_NOACTIVATE);
 //        Sleep(1);
         if IsFull then
           SendMessage(ForegroundWSA, WM_SYSCOMMAND, SC_RESTORE, 0)
@@ -368,10 +371,11 @@ begin
 //            cs.pid := 5;
             OleCheck(pc.GetDetailsEx(pidChild, SHCOLUMNID(PKEY_AppUserModel_ID), @sa));
 { TODO : If ADB connection is established, better list using adb shell cmd package list packages -3 }          
-            if (Pos('com.', sa) = 1)
-            or (Pos('org.', sa) = 1)
-            or (Pos('net.', sa) = 1)
-            or (Pos('tv.', sa) = 1)
+//            if (Pos('com.', sa) = 1)
+//            or (Pos('org.', sa) = 1)
+//            or (Pos('net.', sa) = 1)
+//            or (Pos('tv.', sa) = 1)
+            if IsValidAppPackageName(sa)
             or (Pos('!Setti', sa) > 0)
             then
             begin
@@ -388,7 +392,7 @@ begin
                 lbWSAMUI.Text := sa;
 //                Icon2Bitmap(icon.Handle, imgWSA.Bitmap);
               end
-              else
+              else //if IsWsaClientLnkTarget(sa) then
               begin
                 Item := ListView1.Items.Add;
                 Item.Text := FileInfo.szDisplayName;
@@ -429,6 +433,84 @@ end;
 procedure TWinDroidHwnd.Button1Click(Sender: TObject);
 begin
   TrayIconClick(Self);
+end;
+
+//https://developer.android.com/guide/topics/manifest/manifest-element#package
+function TWinDroidHwnd.IsValidAppPackageName(value: string): Boolean;
+const
+  VALIDCHARS='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._';
+var
+  ch: PChar;
+  I: Integer;
+  dotsCounter: Integer;
+  dotsoffset: Integer; 
+begin
+  dotsCounter := 0;
+  dotsoffset := 0;
+  Result := True;  
+  I := 1; // first char must be A_Z only
+  if value[I] in ['A'..'Z', 'a'..'z'] then
+  begin
+    for I := 2 to value.Length do
+    begin
+      if value[I] = '.' then
+      begin
+        Inc(dotsCounter);
+        if dotsoffset = 0 then
+          dotsoffset := I;
+      end;
+        
+      if not(value[I] in ['A'..'Z','a'..'z','0'..'9','_','.']) then
+        Result := False;
+        
+      if (value[I-1] = '.') and (value[I] = '.') // two consecutive dots are not allowed
+      then
+        Result := False;
+        
+      if not Result then Break;
+    end;
+    if Result and (dotsCounter < 2) then
+      Result := False;    
+    // hacky (bad) way to ignore other windows apps like Microsoft.Windows.Explorer
+    // since they also use its AppUserModelID similarly to an Android Package Name
+    // but most Android apps tend to use com. tv. org. net. etc which are shorter Microsoft.
+    { TODO : compare to ADB's list result better, but we need to install/configure its path first }
+    if (dotsoffset > 4) or (dotsoffset < 2) then
+      Result := False;
+  end
+  else
+    Result := False;
+end;
+
+// Verify that lnk located at
+function TWinDroidHwnd.IsWsaClientLnkTarget(value: string): Boolean;
+var
+  lnk: IShellLink;
+  storage: IPersistFile;
+  widePath: WideString;
+  buf: array[0..4096] of Char;
+  fileData: TWin32FindData;
+  realPath: LPCWSTR;
+begin
+  Result := False;
+  OleCheck(CoCreateInstance(CLSID_ShellLink, nil, CLSCTX_INPROC_SERVER, IShellLink, lnk));
+  OleCheck(lnk.QueryInterface(IPersistFile, storage));
+
+  if Succeeded(SHGetKnownFolderPath(FOLDERID_AppsFolder, KF_FLAG_DEFAULT, 0, realPath)) then
+  begin
+//    widePath := 'shell:::{4234d49b-0245-4df3-b780-3893943456e1}\'+value;
+    widePath := {utf16toutf8}realPath + '\' + value;
+    if Succeeded(storage.Load(@widePath[1], STGM_READ)) then
+      if Succeeded(lnk.Resolve(GetActiveWindow, SLR_NOUPDATE)) then
+        if Succeeded( lnk.GetPath(buf, SizeOf(buf), fileData, SLGP_UNCPRIORITY) )
+        then
+        begin
+          Result := LowerCase(buf).Contains('\wsaclient.exe');
+        end;
+    CoTaskMemFree(realPath);
+  end;
+  storage := nil;
+  lnk := nil;
 end;
 
 procedure TWinDroidHwnd.FloatAnimation1Finish(Sender: TObject);
