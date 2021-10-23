@@ -1,7 +1,7 @@
 object Form1: TForm1
   Left = 0
   Top = 0
-  ActiveControl = TabItem1
+  ActiveControl = TabItem2
   Caption = 'Form1'
   ClientHeight = 481
   ClientWidth = 356
@@ -52145,7 +52145,7 @@ object Form1: TForm1
       Size.Width = 326.000000000000000000
       Size.Height = 370.000000000000000000
       Size.PlatformDefault = False
-      TabIndex = 0
+      TabIndex = 1
       TabOrder = 1
       TabPosition = PlatformDefault
       Sizes = (
@@ -52163,7 +52163,7 @@ object Form1: TForm1
           end>
         TextSettings.Font.Family = 'Segoe UI Variable Display'
         StyledSettings = [Style, FontColor]
-        IsSelected = True
+        IsSelected = False
         Size.Width = 48.000000000000000000
         Size.Height = 24.000000000000000000
         Size.PlatformDefault = False
@@ -52216,7 +52216,7 @@ object Form1: TForm1
           end>
         TextSettings.Font.Family = 'Segoe UI Variable Display'
         StyledSettings = [Style, FontColor]
-        IsSelected = False
+        IsSelected = True
         Size.Width = 43.000000000000000000
         Size.Height = 24.000000000000000000
         Size.PlatformDefault = False
@@ -52228,7 +52228,7 @@ object Form1: TForm1
         object btnDownloadADB: TButton
           StyledSettings = [Family, Style, FontColor]
           Position.X = 8.000000000000000000
-          Position.Y = 24.000000000000000000
+          Position.Y = 72.000000000000000000
           Size.Width = 97.000000000000000000
           Size.Height = 22.000000000000000000
           Size.PlatformDefault = False
@@ -52240,9 +52240,9 @@ object Form1: TForm1
         object ProgressBar1: TProgressBar
           Orientation = Horizontal
           Position.X = 112.000000000000000000
-          Position.Y = 24.000000000000000000
+          Position.Y = 72.000000000000000000
           Size.Width = 209.000000000000000000
-          Size.Height = 20.000000000000000000
+          Size.Height = 12.000000000000000000
           Size.PlatformDefault = False
         end
       end
@@ -52420,6 +52420,22 @@ object Form1: TForm1
         object imgWSA: TImage
           MultiResBitmap = <
             item
+              Width = 44
+              Height = 44
+              PNG = {
+                89504E470D0A1A0A0000000D494844520000002C0000002C08060000001E845A
+                01000000017352474200AECE1CE90000000467414D410000B18F0BFC61050000
+                0142494441545847EDD7B14A43311406E0FFA42DB68A8383E8E60B283A3A3B39
+                E83BF4A25807F115C4D1CD410445D067D0C5C9D941501FC1B18383205AA8E418
+                E180B6F7A625B986BB9C6FC94D20C9CFB9811028A594AA14491B6CBBBBD736C6
+                5C4A3788B536BB983BB9926E10236DB0D8B03FCACCF55678E17CB34D44830B5B
+                06F72DFADD776CEC2FCB609CEBA30734E6A761261BA0BA8B41BF5198397BD9B9
+                29FC03DE0AE7C2FE3796B6C0A8BDBD156E1EAEE5977415C697857DFDC0FAEE92
+                0CC6B93D7E04CD4E819A75A0E6EA3694A4777057982DFA0C574503A7A68153D3
+                C0A969E0D4BC375DABB39ABFE9586EBAB71E56B6166530CED3E93368A6059AA8
+                B9B2B9BA0D25F93CBBD79BAE121A38350D9C9A064E4D03A7E60D6CC1997C0EFA
+                F31C2F65C432DEBD9DE8DD0B5FD5017CAFE271A28F0413BC5518A7CC5CA59452
+                5502BE0114C5464235B104530000000049454E44AE426082}
             end>
           Cursor = crHandPoint
           Position.X = 8.000000000000000000

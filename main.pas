@@ -92,6 +92,8 @@ type
     function GetMainTaskbarPosition: Integer;
 
     function GetWSAInstallationPath(amui: string): string;
+
+    function ReplaceAmazonAppstore: Boolean;
   private
     { Private declarations }
     WSA: TWSA;
@@ -237,7 +239,7 @@ begin
               begin
                 lbWSAInfo.Text := FileInfo.szDisplayName;
                 lbWSAMUI.Text := sa;
-                Icon2Bitmap(icon.Handle, imgWSA.Bitmap);
+//                Icon2Bitmap(icon.Handle, imgWSA.Bitmap);
               end
               else
               begin
@@ -521,6 +523,12 @@ begin
     MenuItem1.Enabled := Assigned(ListView1.Selected);
     if MenuItem1.Enabled then
       MenuItem1.Text := 'Uninstall ' + ListView1.Selected.TagString;
+end;
+
+function TForm1.ReplaceAmazonAppstore: Boolean;
+begin
+//https://amazonadsi-a.akamaihd.net/public/ix/stable/default/us/Amazon_App.apk
+  
 end;
 
 procedure TForm1.TrayIconClick(Sender: TObject);
