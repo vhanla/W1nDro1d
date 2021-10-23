@@ -104,6 +104,10 @@ type
 var
   Form1: TForm1;
   TrayIcon: TTrayIcon;
+  Hook: NativeUInt;
+  prevRect: TRect;
+  AppsClasses: TStringList;
+  WsaClientPath: string;
 
 implementation
 
@@ -143,6 +147,58 @@ begin
     LBmp.Free;
     LIcon.Free;
   end;  
+end;
+
+procedure WinEventProc(hWinEventHook: NativeUInt; dwEvent: DWORD; handle: HWND;
+  idObject, idChild: LONG; dwEventThread, dwmsEventTime: DWORD);
+var
+  LHWindow: HWND;
+  LHFullScreen: BOOL;
+  vRect: TRect;
+  ParentHandle: HWND;
+  clsName: array[0..255] of Char;
+  pid: DWORD;
+  path: array [0..4095] of Char;  
+begin
+  if (dwEvent = EVENT_OBJECT_LOCATIONCHANGE)
+  or (dwEvent = EVENT_SYSTEM_FOREGROUND) then
+  begin
+    LHWindow := GetForegroundWindow;
+    if LHWindow <> 0 then
+    begin
+      GetWindowRect(LHWindow, vRect);
+      if prevRect <> vRect then
+      begin
+        prevRect := vRect;
+        // process current 64bit foreground window to find out if it is a WsaClient.exe instance
+        // and what WindowState is currently applied, in order to toggle its size with the keyhook dll
+        GetClassName(LHWindow, clsName, 255);
+        if Trim(clsName) <> '' then
+        begin          
+          // check if this class name is one of our listed applications
+          if AppsClasses.IndexOf(clsName) <> -1 then
+          begin
+            GetWindowThreadProcessId(LHWindow, pid);
+            var proc := OpenProcess(PROCESS_QUERY_INFORMATION or PROCESS_VM_READ, False, pid);
+            if proc <> 0 then
+            begin
+              try
+                GetModuleFileNameEx(proc, 0, @path[0], Length(path));
+                // check if is our wsaclient, and not other executable named the same
+                if Trim(path) = Trim(WsaClientPath) then
+                begin
+                  Form1.lbWSAInfo.Text := clsName;                
+                  Form1.lbWSAVersion.Text := path;
+                end;
+              finally
+                CloseHandle(proc);
+              end;
+            end;
+          end;
+        end;
+      end;
+    end;
+  end;
 end;
 
 procedure TForm1.btnDownloadADBClick(Sender: TObject);
@@ -210,6 +266,7 @@ begin
           OleCheck(psfControl.EnumObjects(0, SHCONTF_NONFOLDERS or SHCONTF_INCLUDEHIDDEN, pEnumList));
 
           ListView1.Items.Clear;
+          AppsClasses.Clear;
 //          ImageList1.
           while pEnumList.Next(1, pidChild, celtFetched) = 0 do
           begin
@@ -249,6 +306,7 @@ begin
                 Item.Detail := sa;
                 Item.TagString := sa;
                 Icon2Bitmap(icon.Handle, Item.Bitmap);
+                AppsClasses.Add(sa);
               end;
 
               icon.Free;
@@ -304,6 +362,9 @@ procedure TForm1.FormCreate(Sender: TObject);
 begin
 //  Lang1.Lang := 'es';
 
+  AppsClasses := TStringList.Create;
+  AppsClasses.Sorted := True;
+
   Layout1.Align := TAlignLayout.None;
   TrayIcon := TTrayIcon.Create(Self);
   TrayIcon.SetOnClick(TrayIconClick);
@@ -337,11 +398,21 @@ begin
   btnRefreshAppsListClick(Sender); // this gets WSA Settings app AppUserModelID
   GetWSAInstallationPath(lbWSAMUI.Text); // this makes sure it is correct and updates WSA record info
   lbWSAVersion.Text := 'Version: ' + WSA.Version;
+
+  // detect window change foreground
+  Hook := SetWinEventHook(EVENT_MIN, EVENT_MAX, 0, @WinEventProc, 0, 0, WINEVENT_OUTOFCONTEXT or WINEVENT_SKIPOWNPROCESS);
+  if Hook = 0 then
+    raise Exception.Create('Couldn''t create event hook!');
+//  RunHook(Handle);
 end;
 
 procedure TForm1.FormDestroy(Sender: TObject);
 begin
+//  KillHook;
+  UnhookWinEvent(Hook);
   TrayIcon.Destroy;
+
+  AppsClasses.Free;
 end;
 
 function TForm1.GetMainTaskbarPosition: Integer;
@@ -467,7 +538,10 @@ begin
           WSA.WsaSettings := '\WsaSettings.exe';
         WSA.WsaClient := '';
         if FileExists(installPath + '\WsaClient\WsaClient.exe') then
+        begin
           WSA.WsaClient := '\WsaClient\WsaClient.exe';
+          WsaClientPath := Trim(installPath + '\WsaClient\WsaClient.exe');
+        end;
         Break;
       end;
     end;
