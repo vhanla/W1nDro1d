@@ -6,7 +6,7 @@ uses
   FMX.Platform.Win,
   System.SysUtils,
   Winapi.Windows,
-  main in 'main.pas' {Form1};
+  main in 'main.pas' {WinDroidHwnd};
 
 {$R *.res}
 
@@ -21,7 +21,7 @@ begin
   end;
 
   Application.Initialize;
-  Application.CreateForm(TForm1, Form1);
+  Application.CreateForm(TWinDroidHwnd, WinDroidHwnd);
   Application.RealCreateForms;
   Application.MainForm.Visible := False;
   Application.Run;

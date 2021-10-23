@@ -1,0 +1,48 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{81AD9E1E-1688-472A-B4EB-8B2067AB6AB6}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="W1nDro1d.dproj">
+            <Dependencies>F11Hook.dproj</Dependencies>
+        </Projects>
+        <Projects Include="F11Hook.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="W1nDro1d" DependsOnTargets="F11Hook">
+        <MSBuild Projects="W1nDro1d.dproj"/>
+    </Target>
+    <Target Name="W1nDro1d:Clean" DependsOnTargets="F11Hook:Clean">
+        <MSBuild Projects="W1nDro1d.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="W1nDro1d:Make" DependsOnTargets="F11Hook:Make">
+        <MSBuild Projects="W1nDro1d.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="F11Hook">
+        <MSBuild Projects="F11Hook.dproj"/>
+    </Target>
+    <Target Name="F11Hook:Clean">
+        <MSBuild Projects="F11Hook.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="F11Hook:Make">
+        <MSBuild Projects="F11Hook.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="W1nDro1d;F11Hook"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="W1nDro1d:Clean;F11Hook:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="W1nDro1d:Make;F11Hook:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>

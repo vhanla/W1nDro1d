@@ -11,6 +11,7 @@ uses
   FMX.ListView, FMX.Controls.Presentation, FMX.StdCtrls, FMX.Ani, FMX.Layouts,
   DosCommand, ksVirtualListView, System.ImageList, FMX.ImgList, FMX.Edit,
   FMX.Menus,
+  Winapi.Messages,
   Winapi.IpHlpApi
   ;
 
@@ -30,7 +31,7 @@ type
     WsaClient: string;
   end;
   
-  TForm1 = class(TForm)
+  TWinDroidHwnd = class(TForm)
     Rectangle1: TRectangle;
     GlowEffect1: TGlowEffect;
     TabControl1: TTabControl;
@@ -97,27 +98,40 @@ type
   private
     { Private declarations }
     WSA: TWSA;
+//    FHookWndHandle: THandle;
+//    procedure WndMethod(var Msg: Winapi.Messages.TMessage);
   public
     { Public declarations }
   end;
 
 var
-  Form1: TForm1;
+  WinDroidHwnd: TWinDroidHwnd;
   TrayIcon: TTrayIcon;
   Hook: NativeUInt;
   prevRect: TRect;
   AppsClasses: TStringList;
   WsaClientPath: string;
+  WndProcHook: THandle;
+  IsForegroundWSA: Boolean = False;
+  ForegroundWSA: THandle;
 
 implementation
 
 uses
-  Winapi.Windows, Winapi.Messages, Winapi.PsAPI, Winapi.DwmApi, Winapi.MultiMon,
+  Winapi.Windows, Winapi.PsAPI, Winapi.DwmApi, Winapi.MultiMon,
   Winapi.ShellAPI, FMX.Platform.Win, Vcl.Graphics, Registry, MSXML, System.IOUtils,
   Winapi.KnownFolders, ShlObj, ActiveX, ComObj, Winapi.PropKey, OleAcc;
 
 type
   TVclBmp = Vcl.Graphics.TBitmap;
+
+const
+  WM_TOGGLEFULLSCREEN = WM_USER + 9;
+
+
+  function StartHook:BOOL; stdcall; external 'F11Hook.dll' name 'STARTHOOK';
+  procedure StopHook; stdcall; external 'F11Hook.dll' name 'STOPHOOK';  
+
 
 {$R *.fmx}
 
@@ -187,8 +201,15 @@ begin
                 // check if is our wsaclient, and not other executable named the same
                 if Trim(path) = Trim(WsaClientPath) then
                 begin
-                  Form1.lbWSAInfo.Text := clsName;                
-                  Form1.lbWSAVersion.Text := path;
+                  WinDroidHwnd.lbWSAInfo.Text := clsName;                
+                  WinDroidHwnd.lbWSAVersion.Text := path;
+                  IsForegroundWSA := True;
+                  ForegroundWSA := LHWindow;
+                end
+                else
+                begin
+                  IsForegroundWSA := False;
+                  ForegroundWSA := 0;
                 end;
               finally
                 CloseHandle(proc);
@@ -201,14 +222,83 @@ begin
   end;
 end;
 
-procedure TForm1.btnDownloadADBClick(Sender: TObject);
+function WndProc(nCode: Integer; wParam: WPARAM; lParam: LPARAM): LRESULT; stdcall;
+var
+  msg: TCWPRetStruct;
+  LMonitor: HMONITOR;
+  MonInfo: MONITORINFO;
+  IsFull: Boolean;
+begin
+  if (nCode >= HC_ACTION) {and (lParam > 0)} then
+  begin
+    msg := PCWPRetStruct(lParam)^;
+    
+    if (msg.message = WM_TOGGLEFULLSCREEN) then
+    begin
+//      OutputDebugString('F11 EVENT');
+//      WinDroidHwnd.lbWSAVersion.Text := 'F11 ' + inttoStr(Random(100));      
+      // if current foreground window is an Android app, let's toogle its size to mimix windowed fullscreen
+      if IsForegroundWSA 
+      and (GetForegroundWindow = ForegroundWSA)
+      and IsWindow(ForegroundWSA) 
+      then
+      begin
+        var style := GetWindowLong(ForegroundWSA, GWL_STYLE);                
+        if (style and WS_CAPTION = WS_CAPTION)
+        and (style and WS_THICKFRAME = WS_THICKFRAME)
+        then
+        begin
+          style := style and not WS_CAPTION;
+          style := style and not WS_THICKFRAME;
+          IsFull := False; //current fullscreen state
+        end
+        else
+        begin
+          style := style or WS_CAPTION;        
+          style := style or WS_THICKFRAME;
+          IsFull := True;
+        end;
+        
+        SetWindowLong(ForegroundWSA, GWL_STYLE, style);
+
+        LMonitor := Winapi.MultiMon.MonitorFromWindow(ForegroundWSA, MONITOR_DEFAULTTOPRIMARY);
+        MonInfo.cbSize := SizeOf(MONITORINFO);
+        GetMonitorInfo(LMonitor, @MonInfo);
+        
+//        if IsFull then
+//        SetWindowPos(ForegroundWSA, 0, 
+//          MonInfo.rcWork.Left, 
+//          MonInfo.rcWork.Top, 
+//          MonInfo.rcWork.Width, 
+//          MonInfo.rcWork.Height,
+//          {SWP_NOSIZE or} SWP_NOMOVE or SWP_FRAMECHANGED or SWP_NOACTIVATE)
+//        else
+//        SetWindowPos(ForegroundWSA, 0, 
+//          MonInfo.rcMonitor.Left, 
+//          MonInfo.rcMonitor.Top, 
+//          MonInfo.rcMonitor.Width, 
+//          MonInfo.rcMonitor.Height,
+//          SWP_NOMOVE or SWP_FRAMECHANGED or SWP_NOACTIVATE);        
+//        Sleep(1);
+        if IsFull then
+          SendMessage(ForegroundWSA, WM_SYSCOMMAND, SC_RESTORE, 0)
+        else
+          SendMessage(ForegroundWSA, WM_SYSCOMMAND, SC_MAXIMIZE, 0);
+      end;      
+    end;
+  end;
+
+  Result := CallNextHookEx(WndProcHook, nCode, wParam, lParam);
+end;
+
+procedure TWinDroidHwnd.btnDownloadADBClick(Sender: TObject);
 begin
 // Start debug client apk
 //"C:\Program Files\WindowsApps\MicrosoftCorporationII.WindowsSubsystemForAndroid_1.7.32815.0_x64__8wekyb3d8bbwe\WsaClient\WsaClient.exe" /deeplink wsa-client://developer-settings
 
 end;
 
-procedure TForm1.btnRefreshAppsListClick(Sender: TObject);
+procedure TWinDroidHwnd.btnRefreshAppsListClick(Sender: TObject);
 var
   io: IKnownFolderManager;
   count: Cardinal;
@@ -336,29 +426,29 @@ begin
   CoUninitialize;
 end;
 
-procedure TForm1.Button1Click(Sender: TObject);
+procedure TWinDroidHwnd.Button1Click(Sender: TObject);
 begin
   TrayIconClick(Self);
 end;
 
-procedure TForm1.FloatAnimation1Finish(Sender: TObject);
+procedure TWinDroidHwnd.FloatAnimation1Finish(Sender: TObject);
 begin
   FloatAnimation1.Enabled := False;
 end;
 
-procedure TForm1.FloatAnimation1Process(Sender: TObject);
+procedure TWinDroidHwnd.FloatAnimation1Process(Sender: TObject);
 begin
   if not Visible then
     Visible := True;
 end;
 
-procedure TForm1.FloatAnimation2Finish(Sender: TObject);
+procedure TWinDroidHwnd.FloatAnimation2Finish(Sender: TObject);
 begin
   FloatAnimation2.Enabled := False;
   Visible := False;
 end;
 
-procedure TForm1.FormCreate(Sender: TObject);
+procedure TWinDroidHwnd.FormCreate(Sender: TObject);
 begin
 //  Lang1.Lang := 'es';
 
@@ -399,23 +489,30 @@ begin
   GetWSAInstallationPath(lbWSAMUI.Text); // this makes sure it is correct and updates WSA record info
   lbWSAVersion.Text := 'Version: ' + WSA.Version;
 
+//  FHookWndHandle := AllocateHWnd(WndMethod);  
+
   // detect window change foreground
   Hook := SetWinEventHook(EVENT_MIN, EVENT_MAX, 0, @WinEventProc, 0, 0, WINEVENT_OUTOFCONTEXT or WINEVENT_SKIPOWNPROCESS);
   if Hook = 0 then
     raise Exception.Create('Couldn''t create event hook!');
 //  RunHook(Handle);
+  if not StartHook then
+    raise Exception.Create('Couldn''t set global hook to intercept F11');
 end;
 
-procedure TForm1.FormDestroy(Sender: TObject);
+procedure TWinDroidHwnd.FormDestroy(Sender: TObject);
 begin
+  StopHook;
 //  KillHook;
   UnhookWinEvent(Hook);
+
+//  DeallocateHWnd(FHookWndHandle);
   TrayIcon.Destroy;
 
   AppsClasses.Free;
 end;
 
-function TForm1.GetMainTaskbarPosition: Integer;
+function TWinDroidHwnd.GetMainTaskbarPosition: Integer;
 const ABNONE = -1;
 var
   AMonitor: HMonitor;
@@ -463,7 +560,7 @@ begin
 end;
 
 { TODO : If for some weird reason there is more than one WSA installed (maybe a variant), we must make sure it picks the correct on :-/ }
-function TForm1.GetWSAInstallationPath(amui: string): string;
+function TWinDroidHwnd.GetWSAInstallationPath(amui: string): string;
 var
   reg: TRegistry;
   list: TStringList;
@@ -551,19 +648,19 @@ begin
   end;
 end;
 
-procedure TForm1.imgWSAClick(Sender: TObject);
+procedure TWinDroidHwnd.imgWSAClick(Sender: TObject);
 begin
   ShellExecute(0, 'OPEN', 'explorer.exe', PChar('shell:::{4234d49b-0245-4df3-b780-3893943456e1}\'+lbWSAMUI.Text), nil, SW_SHOWNORMAL)
 end;
 
-procedure TForm1.ListView1ButtonClick(const Sender: TObject;
+procedure TWinDroidHwnd.ListView1ButtonClick(const Sender: TObject;
   const AItem: TListItem; const AObject: TListItemSimpleControl);
 begin
 //  ShowMessage(AItem.TagString);
   ShellExecute(0, 'OPEN', 'explorer.exe', PChar('shell:::{4234d49b-0245-4df3-b780-3893943456e1}\'+AItem.TagString), nil, SW_SHOWNORMAL)
 end;
 
-procedure TForm1.MenuItem1Click(Sender: TObject);
+procedure TWinDroidHwnd.MenuItem1Click(Sender: TObject);
 begin
 //"C:\Users\<username>\AppData\Local\Microsoft\WindowsApps\MicrosoftCorporationII.WindowsSubsystemForAndroid_8wekyb3d8bbwe\WsaClient.exe" /uninstall com.amazon.venezia
   if Assigned(ListView1.Selected) then
@@ -576,7 +673,7 @@ begin
   end;
 end;
 
-procedure TForm1.MenuItem3Click(Sender: TObject);
+procedure TWinDroidHwnd.MenuItem3Click(Sender: TObject);
 //var
 //  appPath: string;
 begin
@@ -587,25 +684,25 @@ begin
 //  ShellExecute(0, 'OPEN', 'explorer.exe', PChar('shell:::{4234d49b-0245-4df3-b780-3893943456e1}\'+lbWSAMUI.Text), nil, SW_SHOWNORMAL)
 end;
 
-procedure TForm1.MenuItem4Click(Sender: TObject);
+procedure TWinDroidHwnd.MenuItem4Click(Sender: TObject);
 begin
   imgWSAClick(Self);
 end;
 
-procedure TForm1.PopupMenu1Popup(Sender: TObject);
+procedure TWinDroidHwnd.PopupMenu1Popup(Sender: TObject);
 begin
     MenuItem1.Enabled := Assigned(ListView1.Selected);
     if MenuItem1.Enabled then
       MenuItem1.Text := 'Uninstall ' + ListView1.Selected.TagString;
 end;
 
-function TForm1.ReplaceAmazonAppstore: Boolean;
+function TWinDroidHwnd.ReplaceAmazonAppstore: Boolean;
 begin
 //https://amazonadsi-a.akamaihd.net/public/ix/stable/default/us/Amazon_App.apk
   
 end;
 
-procedure TForm1.TrayIconClick(Sender: TObject);
+procedure TWinDroidHwnd.TrayIconClick(Sender: TObject);
 const
   ABE_NONE = -1;
   GAP = 0;
@@ -675,9 +772,28 @@ begin
   end;
 end;
 
-procedure TForm1.TrayIconExit(Sender: TObject);
+procedure TWinDroidHwnd.TrayIconExit(Sender: TObject);
 begin
   Close;
 end;
+
+//procedure TWinDroidHwnd.WndMethod(var Msg: TMessage);
+//begin
+//  if Msg.Msg = WM_TOGGLEFULLSCREEN then
+//  begin
+//    OutputDebugString('F11 WndMethod EVENT');
+//    WinDroidHwnd.lbWSAVersion.Text := 'F11 ' + inttoStr(Random(100));          
+//  end;
+//end;
+
+initialization
+  CoInitialize(nil);
+  WndProcHook := 0;
+  WndProcHook := SetWindowsHookEx(WH_CALLWNDPROCRET, @WndProc, 0, GetCurrentThreadId);
+  if WndProcHook = 0 then
+    raise Exception.Create('Couldn''t create secondary Window Proc');
+finalization
+  UnhookWindowsHookEx(WndProcHook);
+  CoUninitialize;
 
 end.

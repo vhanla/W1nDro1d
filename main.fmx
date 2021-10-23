@@ -1,8 +1,8 @@
-object Form1: TForm1
+object WinDroidHwnd: TWinDroidHwnd
   Left = 0
   Top = 0
   ActiveControl = TabItem2
-  Caption = 'Form1'
+  Caption = 'W1nDro1d'
   ClientHeight = 481
   ClientWidth = 356
   StyleBook = StyleBook1
@@ -52145,7 +52145,7 @@ object Form1: TForm1
       Size.Width = 326.000000000000000000
       Size.Height = 370.000000000000000000
       Size.PlatformDefault = False
-      TabIndex = 1
+      TabIndex = 0
       TabOrder = 1
       TabPosition = PlatformDefault
       Sizes = (
@@ -52163,7 +52163,7 @@ object Form1: TForm1
           end>
         TextSettings.Font.Family = 'Segoe UI Variable Display'
         StyledSettings = [Style, FontColor]
-        IsSelected = False
+        IsSelected = True
         Size.Width = 48.000000000000000000
         Size.Height = 24.000000000000000000
         Size.PlatformDefault = False
@@ -52216,7 +52216,7 @@ object Form1: TForm1
           end>
         TextSettings.Font.Family = 'Segoe UI Variable Display'
         StyledSettings = [Style, FontColor]
-        IsSelected = True
+        IsSelected = False
         Size.Width = 43.000000000000000000
         Size.Height = 24.000000000000000000
         Size.PlatformDefault = False
