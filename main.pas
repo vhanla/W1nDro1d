@@ -11,8 +11,10 @@ uses
   FMX.ListView, FMX.Controls.Presentation, FMX.StdCtrls, FMX.Ani, FMX.Layouts,
   DosCommand, ksVirtualListView, System.ImageList, FMX.ImgList, FMX.Edit,
   FMX.Menus,
-  Winapi.Messages,
-  Winapi.IpHlpApi
+  Winapi.Messages, Net.HTTPClient,
+  Winapi.IpHlpApi, ksAppEvents, ksTypes, ksCircleProgress, ksSegmentButtons,
+  ksTileMenu, FMX.ExtCtrls, FMX.Memo.Types, FMX.ScrollBox, FMX.Memo,
+  ksTabControl, FMX.Filter.Effects
   ;
 
 const  // hard coded paths, for now located in the same directory where this application runs
@@ -29,6 +31,50 @@ type
     DisplayName: string;
     WsaSettings: string;
     WsaClient: string;
+  end;
+
+  TDownloadEvent = procedure(Sender: TObject; DownloadCode: Integer) of Object;
+
+  TDownloader = class
+  private
+    FValue: Byte;
+    
+    FClient: THTTPClient;    
+    FGlobalStart: Cardinal;
+    FGlobalStep: Cardinal;
+    FAsyncResult: IAsyncResult;
+    FDownloaderStream: TStream;
+    FSize: Int64;
+    FURL: string;
+    FUA: string;
+    FHeader: string;
+    FSavePath: string;
+
+    FOnDownloaded: TDownloadEvent;
+
+    FDownloading: Boolean;
+    FAbortNow: Boolean;
+    FAborted: Boolean;
+    procedure SetValue(const Value: byte);
+  protected
+    procedure DoReceiveDataEvent(const Sender: TObject; AContentLength: Int64;
+      AReadCount: Int64; var Abort: Boolean);
+    procedure DoEndDownload(const AsyncResult: IAsyncResult);
+  public
+    constructor Create;
+    destructor Destroy; override;
+    procedure DoStartDownload;
+    procedure AbortDownload;
+
+    property Value: byte read FValue write SetValue;
+
+    property OnDownloaded: TDownloadEvent read FOnDownloaded write FOnDownloaded;
+    property IsDownloading: Boolean read FDownloading;
+
+    property URL: string read FURL write FURL;
+    property Header: string read FHeader write FHeader;
+    property UserAgent: string read FUA write FUA;
+    property SavePath: string read FSavePath write FSavePath;
   end;
   
   TWinDroidHwnd = class(TForm)
@@ -56,7 +102,6 @@ type
     btnInstallOffline: TButton;
     btnRefreshAppsList: TButton;
     btnDownloadADB: TButton;
-    ProgressBar1: TProgressBar;
     Edit1: TEdit;
     PopupMenu1: TPopupMenu;
     MenuItem1: TMenuItem;
@@ -71,6 +116,27 @@ type
     Rectangle2: TRectangle;
     GlowEffect2: TGlowEffect;
     lbWSAVersion: TLabel;
+    ksCircleProgress1: TksCircleProgress;
+    DropTarget1: TDropTarget;
+    OpenDialog1: TOpenDialog;
+    Edit2: TEdit;
+    Memo1: TMemo;
+    ksTabControl1: TksTabControl;
+    ksTabItem0: TksTabItem;
+    ksTabItem2: TksTabItem;
+    ksTabItem3: TksTabItem;
+    ksTabItem4: TksTabItem;
+    btnReplaceAmazon: TButton;
+    ksCircleProgress2: TksCircleProgress;
+    Label6: TLabel;
+    Label7: TLabel;
+    Label8: TLabel;
+    Button2: TButton;
+    Edit3: TEdit;
+    FillRGBEffect1: TFillRGBEffect;
+    ksCircleProgress3: TksCircleProgress;
+    lbWSAStatus: TLabel;
+    lbWSAForeground: TLabel;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure FloatAnimation1Finish(Sender: TObject);
@@ -86,6 +152,12 @@ type
     procedure MenuItem3Click(Sender: TObject);
     procedure MenuItem4Click(Sender: TObject);
     procedure PopupMenu1Popup(Sender: TObject);
+    procedure DropTarget1DragOver(Sender: TObject; const Data: TDragObject;
+      const Point: TPointF; var Operation: TDragOperation);
+    procedure DropTarget1Dropped(Sender: TObject; const Data: TDragObject;
+      const Point: TPointF);
+    procedure DropTarget1Click(Sender: TObject);
+    procedure Edit4ChangeTracking(Sender: TObject);
   protected
     procedure TrayIconExit(Sender: TObject);
     procedure TrayIconClick(Sender: TObject);
@@ -98,6 +170,8 @@ type
     function IsValidAppPackageName(value: string): Boolean;
     { TODO : In Progress, Shell:AppsFolder items can resolve to lnk files at Shell:Programs directory, we need to do that }
     function IsWsaClientLnkTarget(value: string): Boolean;
+    function IsWsaClientRunning:Boolean;
+    procedure CheckWsaClientStatus;
   private
     { Private declarations }
     WSA: TWSA;
@@ -192,6 +266,7 @@ begin
         GetClassName(LHWindow, clsName, 255);
         if Trim(clsName) <> '' then
         begin          
+          WinDroidHwnd.lbWSAForeground.Text := '';
           // check if this class name is one of our listed applications
           if AppsClasses.IndexOf(clsName) <> -1 then
           begin
@@ -204,8 +279,8 @@ begin
                 // check if is our wsaclient, and not other executable named the same
                 if Trim(path) = Trim(WsaClientPath) then
                 begin
-                  WinDroidHwnd.lbWSAInfo.Text := clsName;                
-                  WinDroidHwnd.lbWSAVersion.Text := path;
+                  WinDroidHwnd.lbWSAForeground.Text := 'WSA App: ' + clsName;                
+//                  WinDroidHwnd.lbWSAVersion.Text := path;
                   IsForegroundWSA := True;
                   ForegroundWSA := LHWindow;
                 end
@@ -222,6 +297,17 @@ begin
         end;
       end;
     end;
+  end;
+  // check wsaclient.exe status using shell events
+  if (dwEvent = EVENT_OBJECT_CREATE) or 
+  (dwEvent = EVENT_OBJECT_DESTROY)
+  then
+  begin
+    if (idObject = OBJID_WINDOW) //or (idChild = INDEXID_CONTAINER)
+    then
+    begin
+      WinDroidHwnd.CheckWsaClientStatus;
+    end;    
   end;
 end;
 
@@ -435,6 +521,45 @@ begin
   TrayIconClick(Self);
 end;
 
+procedure TWinDroidHwnd.CheckWsaClientStatus;
+begin
+  if IsWsaClientRunning then
+    lbWSAStatus.Text := 'Running'
+  else
+  begin
+    lbWSAStatus.Text := 'Not running';
+  end;
+end;
+
+procedure TWinDroidHwnd.DropTarget1Click(Sender: TObject);
+begin
+  OpenDialog1.Filter := 'APK|*.apk|XAPK|*.xapk';
+  if OpenDialog1.Execute then
+  begin
+        
+  end;
+end;
+
+procedure TWinDroidHwnd.DropTarget1DragOver(Sender: TObject;
+  const Data: TDragObject; const Point: TPointF; var Operation: TDragOperation);
+begin
+  if Length(Data.Files) = 1 then
+    Operation := TDragOperation.Move
+  else
+    Operation := TDragOperation.None;  
+end;
+
+procedure TWinDroidHwnd.DropTarget1Dropped(Sender: TObject;
+  const Data: TDragObject; const Point: TPointF);
+begin
+// for d in  Data.Files
+end;
+
+procedure TWinDroidHwnd.Edit4ChangeTracking(Sender: TObject);
+begin
+  
+end;
+
 //https://developer.android.com/guide/topics/manifest/manifest-element#package
 function TWinDroidHwnd.IsValidAppPackageName(value: string): Boolean;
 const
@@ -511,6 +636,23 @@ begin
   end;
   storage := nil;
   lnk := nil;
+end;
+
+function TWinDroidHwnd.IsWsaClientRunning: Boolean;
+const
+  WSA_CLIENT_MUTEX = '{42CEB0DF-325A-4FBE-BBB6-C259A6C3F0BB}';
+var
+  Mutex: NativeUInt;
+begin
+  Result := False;
+  Mutex := OpenMutex(MUTEX_ALL_ACCESS, False, WSA_CLIENT_MUTEX);
+  if Mutex <> 0 then
+  begin
+    Result := True;
+  end;
+
+  CloseHandle(Mutex);
+  
 end;
 
 procedure TWinDroidHwnd.FloatAnimation1Finish(Sender: TObject);
@@ -867,6 +1009,130 @@ end;
 //    WinDroidHwnd.lbWSAVersion.Text := 'F11 ' + inttoStr(Random(100));          
 //  end;
 //end;
+
+{ TDownloader }
+
+procedure TDownloader.AbortDownload;
+begin
+  if FDownloading then
+    FAbortNow := True;
+end;
+
+constructor TDownloader.Create;
+begin
+  inherited;
+  FDownloading := False;
+  FAbortNow := False;
+  FAborted := False;
+
+  FClient := THTTPClient.Create;
+  FClient.OnReceiveData := DoReceiveDataEvent;
+
+  FValue := 0;
+
+end;
+
+destructor TDownloader.Destroy;
+begin
+  FClient.Free;
+  FDownloaderStream.Free;
+  
+  inherited;
+end;
+
+procedure TDownloader.DoEndDownload(const AsyncResult: IAsyncResult);
+var
+  LResponse: IHTTPResponse;
+begin
+  try
+    LResponse := THTTPClient.EndAsyncHTTP(AsyncResult);
+    TThread.Synchronize(nil,
+      procedure
+      begin
+        if LResponse.StatusCode = 200 then
+        begin
+          if FAborted then
+          begin
+            FAborted := False;
+            FOnDownloaded(Self, 209) // Let's consider 209 as aborted successfully
+          end
+          else
+            FOnDownloaded(Self, 200);
+        end
+        else
+        begin
+          // some other error has occurred
+          FOnDownloaded(Self, LResponse.StatusCode);
+        end;
+        FDownloading := False;
+      end
+    );
+  finally
+    LResponse := nil;
+    FreeAndNil(FDownloaderStream);
+    // Show success or something
+  end;
+end;
+
+procedure TDownloader.DoReceiveDataEvent(const Sender: TObject; AContentLength,
+  AReadCount: Int64; var Abort: Boolean);
+var
+  LTime: Cardinal;
+  LSpeed: Integer;
+begin
+  if FAbortNow then
+  begin
+    Abort := True;
+    FAbortNow := False;
+    FAborted := True;    
+  end;  
+  LTime := TThread.GetTickCount - FGlobalStart;
+  LSpeed := (AReadCount * 1000) div LTime;
+  TThread.Queue(nil,
+    procedure
+    begin
+      FValue := Round(100 / FSize * AReadCount);
+//      FStatus := Format('%d KB/s', [LSpeed div 1024]);
+    end
+  );  
+end;
+
+procedure TDownloader.DoStartDownload;
+var
+  LResponse: IHTTPResponse;
+begin
+  if FDownloading then
+  begin
+    raise Exception.Create('Already downloading, stop first!');
+    Exit;
+  end;  
+  try
+    LResponse := FClient.Head(FURL);
+    FSize := LResponse.ContentLength;
+    LResponse := nil;
+    FValue := 0;
+    FDownloaderStream := TFileStream.Create(FSavePath, fmCreate);
+    FDownloaderStream.Position := 0;
+
+    FGlobalStart := TThread.GetTickCount;
+
+    FDownloading := True;
+    FClient.CustomHeaders['Connection'] := 'close'; // to close connection afterwards
+    FAsyncResult := FClient.BeginGet(DoEndDownload, FURL, FDownloaderStream);
+  finally
+    FAsyncResult := nil;
+  end;
+end;
+
+procedure TDownloader.SetValue(const Value: byte);
+begin
+  if Value <> FValue then
+    if Value <= 100 then
+    begin
+      FValue := Value;
+      //
+    end;  
+end;
 
 initialization
   CoInitialize(nil);

@@ -4,7 +4,7 @@
     </PropertyGroup>
     <ItemGroup>
         <Projects Include="W1nDro1d.dproj">
-            <Dependencies>F11Hook.dproj</Dependencies>
+            <Dependencies/>
         </Projects>
         <Projects Include="F11Hook.dproj">
             <Dependencies/>
@@ -17,13 +17,13 @@
             <Default.Personality/>
         </BorlandProject>
     </ProjectExtensions>
-    <Target Name="W1nDro1d" DependsOnTargets="F11Hook">
+    <Target Name="W1nDro1d">
         <MSBuild Projects="W1nDro1d.dproj"/>
     </Target>
-    <Target Name="W1nDro1d:Clean" DependsOnTargets="F11Hook:Clean">
+    <Target Name="W1nDro1d:Clean">
         <MSBuild Projects="W1nDro1d.dproj" Targets="Clean"/>
     </Target>
-    <Target Name="W1nDro1d:Make" DependsOnTargets="F11Hook:Make">
+    <Target Name="W1nDro1d:Make">
         <MSBuild Projects="W1nDro1d.dproj" Targets="Make"/>
     </Target>
     <Target Name="F11Hook">
