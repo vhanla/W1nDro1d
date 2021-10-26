@@ -25,12 +25,15 @@ const  // hard coded paths, for now located in the same directory where this app
   ADB_URL = 'https://dl.google.com/android/repository/platform-tools-latest-windows.zip';
 type
   TWSA = record
-    InstallPath: string;  
+    InstallPath: string;
     AppUserModelID: string;
     Version: string;
     DisplayName: string;
     WsaSettings: string;
     WsaClient: string;
+    PublisherDisplayName: string;
+    LogoPath: string; // replace .png with .scale-100.png .scale-125.png .scale-150.png .scale-200.png or .scale-400.png
+    MinWinVersion: string;
   end;
 
   TDownloadEvent = procedure(Sender: TObject; DownloadCode: Integer) of Object;
@@ -38,8 +41,8 @@ type
   TDownloader = class
   private
     FValue: Byte;
-    
-    FClient: THTTPClient;    
+
+    FClient: THTTPClient;
     FGlobalStart: Cardinal;
     FGlobalStep: Cardinal;
     FAsyncResult: IAsyncResult;
@@ -137,6 +140,9 @@ type
     ksCircleProgress3: TksCircleProgress;
     lbWSAStatus: TLabel;
     lbWSAForeground: TLabel;
+    MonochromeEffect1: TMonochromeEffect;
+    lbWSAMinWinVer: TLabel;
+    lbWSAPublisher: TLabel;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure FloatAnimation1Finish(Sender: TObject);
@@ -158,6 +164,8 @@ type
       const Point: TPointF);
     procedure DropTarget1Click(Sender: TObject);
     procedure Edit4ChangeTracking(Sender: TObject);
+    procedure ListView1ItemClickEx(const Sender: TObject; ItemIndex: Integer;
+      const LocalClickPos: TPointF; const ItemObject: TListItemDrawable);
   protected
     procedure TrayIconExit(Sender: TObject);
     procedure TrayIconClick(Sender: TObject);
@@ -451,12 +459,18 @@ begin
           begin
             pidAbsolute := ILCombine(pidControl, pidChild);
             OleCheck(dt.BindToObject(pidControl, nil, IID_IShellFolder2, Pointer(pc)));
-            var sa: OleVariant;
+            var sa,lnk: OleVariant;
 //            var cs: SHCOLUMNID;
 //            cs.fmtid := StringToGUID('{9F4C2855-9F79-4B39-A8D0-E1D42DE1D5F3}');
 //            cs.pid := 5;
-            OleCheck(pc.GetDetailsEx(pidChild, SHCOLUMNID(PKEY_AppUserModel_ID), @sa));
-{ TODO : If ADB connection is established, better list using adb shell cmd package list packages -3 }          
+          OleCheck((pc.GetDetailsEx(pidChild, SHCOLUMNID(PKEY_AppUserModel_ID), @sa)));
+          var re:HRESULT;
+           try
+             re := (pc.GetDetailsEx(pidChild, SHCOLUMNID(PKEY_Link_TargetParsingPath), @lnk));
+           except
+            lnk := '';
+           end;
+{ TODO : If ADB connection is established, better list using adb shell cmd package list packages -3 }
 //            if (Pos('com.', sa) = 1)
 //            or (Pos('org.', sa) = 1)
 //            or (Pos('net.', sa) = 1)
@@ -467,6 +481,9 @@ begin
             begin
 //            SHILCreateFromPath(LPCTSTR(pidAbsolute), pidAbsolute, nil);
               SHGetFileInfo(LPCTSTR(pidAbsolute), 0, FileInfo, SizeOf(FileInfo), SHGFI_PIDL or SHGFI_DISPLAYNAME or SHGFI_ICON or SHGFI_SYSICONINDEX or SHGFI_SHELLICONSIZE or SHGFI_LARGEICON);
+//              pc.GetUIObjectOf(0, )
+//              var c:uint32;
+//              pc.GetAttributesOf(1,pidChild,c);
               CoTaskMemFree(pidAbsolute);
 
               var icon := TIcon.Create;
@@ -475,6 +492,8 @@ begin
               if (Pos('!Sett', sa) > 0) then
               begin
                 lbWSAInfo.Text := FileInfo.szDisplayName;
+
+
                 lbWSAMUI.Text := sa;
 //                Icon2Bitmap(icon.Handle, imgWSA.Bitmap);
               end
@@ -484,7 +503,7 @@ begin
                 Item.Text := FileInfo.szDisplayName;
                 Item.ButtonText := 'Execute';
                 Item.Detail := sa;
-                Item.TagString := sa;
+                Item.TagString := lnk;
                 Icon2Bitmap(icon.Handle, Item.Bitmap);
                 AppsClasses.Add(sa);
               end;
@@ -522,13 +541,17 @@ begin
 end;
 
 procedure TWinDroidHwnd.CheckWsaClientStatus;
+var
+  state: Boolean;
 begin
-  if IsWsaClientRunning then
+  state := IsWsaClientRunning;
+  if state then
     lbWSAStatus.Text := 'Running'
   else
   begin
     lbWSAStatus.Text := 'Not running';
   end;
+  MonochromeEffect1.Enabled :=  not state;
 end;
 
 procedure TWinDroidHwnd.DropTarget1Click(Sender: TObject);
@@ -712,6 +735,8 @@ begin
   btnRefreshAppsListClick(Sender); // this gets WSA Settings app AppUserModelID
   GetWSAInstallationPath(lbWSAMUI.Text); // this makes sure it is correct and updates WSA record info
   lbWSAVersion.Text := 'Version: ' + WSA.Version;
+  lbWSAMinWinVer.Text := 'Minimum Windows Build: ' + WSA.MinWinVersion;
+  lbWSAPublisher.Text := 'Publisher: ' + WSA.PublisherDisplayName;
 
 //  FHookWndHandle := AllocateHWnd(WndMethod);  
 
@@ -832,6 +857,14 @@ begin
             arqt := 'Unknown'; //applies for extension for old edge, I guess we don't need it.
           end;          
 
+          try
+            WSA.PublisherDisplayName := node.selectSingleNode('Properties').selectSingleNode('PublisherDisplayName').text;          
+            WSA.LogoPath := node.selectSingleNode('Properties').selectSingleNode('Logo').text;
+            WSA.MinWinVersion := node.selectSingleNode('Dependencies').selectSingleNode('TargetDeviceFamily').attributes.getNamedItem('MinVersion').text;
+          except
+          
+          end;
+
           nodes_se := node.selectNodes('Applications');
           for K := 0 to nodes_se.length - 1 do
           begin
@@ -879,20 +912,36 @@ end;
 
 procedure TWinDroidHwnd.ListView1ButtonClick(const Sender: TObject;
   const AItem: TListItem; const AObject: TListItemSimpleControl);
+var
+  LItem: TListViewItem;
 begin
 //  ShowMessage(AItem.TagString);
-  ShellExecute(0, 'OPEN', 'explorer.exe', PChar('shell:::{4234d49b-0245-4df3-b780-3893943456e1}\'+AItem.TagString), nil, SW_SHOWNORMAL)
+  LItem := ListView1.Items[AItem.Index];
+  ShellExecute(0, 'OPEN', 'explorer.exe', PChar('shell:::{4234d49b-0245-4df3-b780-3893943456e1}\'+LItem.Detail), nil, SW_SHOWNORMAL)
+end;
+
+procedure TWinDroidHwnd.ListView1ItemClickEx(const Sender: TObject;
+  ItemIndex: Integer; const LocalClickPos: TPointF;
+  const ItemObject: TListItemDrawable);
+var
+  LItem: TListViewItem;
+begin
+  LItem := ListView1.Items[ItemIndex];
+  ShowMessage(LItem.Text);
 end;
 
 procedure TWinDroidHwnd.MenuItem1Click(Sender: TObject);
+var
+  LItem: TListViewItem;
 begin
 //"C:\Users\<username>\AppData\Local\Microsoft\WindowsApps\MicrosoftCorporationII.WindowsSubsystemForAndroid_8wekyb3d8bbwe\WsaClient.exe" /uninstall com.amazon.venezia
   if Assigned(ListView1.Selected) then
   begin
 //  ShowMessage(ListView1.Selected.TagString);
-    if MessageDlg('Are you sure to uninstall ' + ListView1.Selected.TagString + '?'#13#10'This procedure is irreversible!', TMsgDlgType.mtWarning, [TMsgDlgBtn.mbYes, TMsgDlgBtn.mbNo], 0) = mrYes then
+    LItem := ListView1.Items[ListView1.Selected.Index];
+    if MessageDlg('Are you sure to uninstall ' + LItem.Detail + '?'#13#10'This procedure is irreversible!', TMsgDlgType.mtWarning, [TMsgDlgBtn.mbYes, TMsgDlgBtn.mbNo], 0) = mrYes then
     begin
-      ShellExecute(0, 'OPEN', '%USERPROFILE%\AppData\Local\Microsoft\WindowsApps\MicrosoftCorporationII.WindowsSubsystemForAndroid_8wekyb3d8bbwe\WsaClient.exe', PChar('/uninstall ' + ListView1.Selected.TagString), nil, SW_SHOWNORMAL);
+      ShellExecute(0, 'OPEN', '%USERPROFILE%\AppData\Local\Microsoft\WindowsApps\MicrosoftCorporationII.WindowsSubsystemForAndroid_8wekyb3d8bbwe\WsaClient.exe', PChar('/uninstall ' + LItem.Detail), nil, SW_SHOWNORMAL);
     end;
   end;
 end;
@@ -914,10 +963,15 @@ begin
 end;
 
 procedure TWinDroidHwnd.PopupMenu1Popup(Sender: TObject);
+var
+  LItem: TListViewItem;
 begin
     MenuItem1.Enabled := Assigned(ListView1.Selected);
     if MenuItem1.Enabled then
-      MenuItem1.Text := 'Uninstall ' + ListView1.Selected.TagString;
+    begin
+      LItem := ListView1.Items[ListView1.Selected.Index];
+      MenuItem1.Text := 'Uninstall ' + LItem.Text;
+    end;
 end;
 
 function TWinDroidHwnd.ReplaceAmazonAppstore: Boolean;
