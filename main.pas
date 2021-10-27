@@ -497,7 +497,7 @@ begin
                 lbWSAMUI.Text := sa;
 //                Icon2Bitmap(icon.Handle, imgWSA.Bitmap);
               end
-              else //if IsWsaClientLnkTarget(sa) then
+              else if (LowerCase(lnk).Contains('wsaclient.exe')) then//if IsWsaClientLnkTarget(sa) then
               begin
                 Item := ListView1.Items.Add;
                 Item.Text := FileInfo.szDisplayName;
@@ -927,7 +927,7 @@ var
   LItem: TListViewItem;
 begin
   LItem := ListView1.Items[ItemIndex];
-  ShowMessage(LItem.Text);
+//  ShowMessage(LItem.Text);
 end;
 
 procedure TWinDroidHwnd.MenuItem1Click(Sender: TObject);
@@ -941,7 +941,7 @@ begin
     LItem := ListView1.Items[ListView1.Selected.Index];
     if MessageDlg('Are you sure to uninstall ' + LItem.Detail + '?'#13#10'This procedure is irreversible!', TMsgDlgType.mtWarning, [TMsgDlgBtn.mbYes, TMsgDlgBtn.mbNo], 0) = mrYes then
     begin
-      ShellExecute(0, 'OPEN', '%USERPROFILE%\AppData\Local\Microsoft\WindowsApps\MicrosoftCorporationII.WindowsSubsystemForAndroid_8wekyb3d8bbwe\WsaClient.exe', PChar('/uninstall ' + LItem.Detail), nil, SW_SHOWNORMAL);
+      ShellExecute(0, 'OPEN', PChar(WSA.InstallPath + WSA.WsaClient), PChar('/uninstall ' + LItem.Detail), nil, SW_SHOWNORMAL);
     end;
   end;
 end;
