@@ -68,3 +68,5 @@ __recovery/
 # Boss dependency manager vendor folder https://github.com/HashLoad/boss
 modules/
 W1nDro1d.delphilsp.json
+Win32
+Win64
