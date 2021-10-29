@@ -1,0 +1,96 @@
+object frmInstaller: TfrmInstaller
+  Left = 0
+  Top = 0
+  Caption = 'APK Installer'
+  ClientHeight = 302
+  ClientWidth = 540
+  FormFactor.Width = 320
+  FormFactor.Height = 480
+  FormFactor.Devices = [Desktop]
+  DesignerMasterStyle = 0
+  object Image1: TImage
+    MultiResBitmap = <
+      item
+      end>
+    Anchors = [akTop, akRight]
+    Position.X = 400.000000000000000000
+    Position.Y = 16.000000000000000000
+    Size.Width = 97.000000000000000000
+    Size.Height = 97.000000000000000000
+    Size.PlatformDefault = False
+  end
+  object btnReInstall: TButton
+    Anchors = [akLeft, akBottom]
+    Position.X = 304.000000000000000000
+    Position.Y = 248.000000000000000000
+    TabOrder = 2
+    Text = 'Install'
+  end
+  object btnLaunch: TButton
+    Anchors = [akLeft, akBottom]
+    Position.X = 416.000000000000000000
+    Position.Y = 248.000000000000000000
+    TabOrder = 1
+    Text = 'Launch'
+  end
+  object lbAPKDisplayName: TLabel
+    Anchors = [akLeft, akTop, akRight]
+    StyledSettings = [Family, FontColor]
+    Position.X = 16.000000000000000000
+    Position.Y = 16.000000000000000000
+    Size.Width = 377.000000000000000000
+    Size.Height = 41.000000000000000000
+    Size.PlatformDefault = False
+    TextSettings.Font.Size = 20.000000000000000000
+    TextSettings.Font.StyleExt = {00060000000000000004000000}
+    Text = 'APK Display Name'
+    TabOrder = 6
+  end
+  object lbPublisher: TLabel
+    Anchors = [akLeft, akTop, akRight]
+    Position.X = 16.000000000000000000
+    Position.Y = 64.000000000000000000
+    Size.Width = 377.000000000000000000
+    Size.Height = 17.000000000000000000
+    Size.PlatformDefault = False
+    Text = 'Publisher'
+    TabOrder = 5
+  end
+  object lbVersion: TLabel
+    Anchors = [akLeft, akTop, akRight]
+    Position.X = 16.000000000000000000
+    Position.Y = 88.000000000000000000
+    Size.Width = 377.000000000000000000
+    Size.Height = 17.000000000000000000
+    Size.PlatformDefault = False
+    Text = 'Version:'
+    TabOrder = 4
+  end
+  object lbCapabilities: TLabel
+    Position.X = 16.000000000000000000
+    Position.Y = 128.000000000000000000
+    Size.Width = 377.000000000000000000
+    Size.Height = 17.000000000000000000
+    Size.PlatformDefault = False
+    Text = 'Capabilities:'
+    TabOrder = 3
+  end
+  object Memo1: TMemo
+    Touch.InteractiveGestures = [Pan, LongTap, DoubleTap]
+    DataDetectorTypes = []
+    Lines.Strings = (
+      '- Permission 1'
+      '- Permission 2'
+      '- etc.')
+    ReadOnly = True
+    Anchors = [akLeft, akTop, akRight, akBottom]
+    Position.X = 16.000000000000000000
+    Position.Y = 152.000000000000000000
+    Size.Width = 273.000000000000000000
+    Size.Height = 97.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 7
+    Viewport.Width = 269.000000000000000000
+    Viewport.Height = 93.000000000000000000
+  end
+end
