@@ -24,6 +24,13 @@ const  // hard coded paths, for now located in the same directory where this app
   // Up to date download link for Windows is located here
   ADB_URL = 'https://dl.google.com/android/repository/platform-tools-latest-windows.zip';
 type
+
+  TSettings = record
+    ADBPath: string;
+    DownloadsPath: string;
+
+  end;
+
   TWSA = record
     InstallPath: string;
     AppUserModelID: string;
@@ -205,7 +212,8 @@ implementation
 uses
   Winapi.Windows, Winapi.PsAPI, Winapi.DwmApi, Winapi.MultiMon,
   Winapi.ShellAPI, FMX.Platform.Win, Vcl.Graphics, Registry, MSXML, System.IOUtils,
-  Winapi.KnownFolders, ShlObj, ActiveX, ComObj, Winapi.PropKey, OleAcc;
+  Winapi.KnownFolders, ShlObj, ActiveX, ComObj, Winapi.PropKey, OleAcc,
+  frmApkInstaller;
 
 type
   TVclBmp = Vcl.Graphics.TBitmap;
@@ -556,6 +564,9 @@ end;
 
 procedure TWinDroidHwnd.DropTarget1Click(Sender: TObject);
 begin
+
+  frmInstaller.Show;
+  Exit;
   OpenDialog1.Filter := 'APK|*.apk|XAPK|*.xapk';
   if OpenDialog1.Execute then
   begin

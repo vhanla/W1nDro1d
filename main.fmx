@@ -1,4 +1,5 @@
 object WinDroidHwnd: TWinDroidHwnd
+  StyleName = 'Windows'
   Left = 0
   Top = 0
   Caption = 'W1nDro1d'
@@ -9592,7 +9593,7 @@ object WinDroidHwnd: TWinDroidHwnd
       Margins.Right = 8.000000000000000000
       Margins.Bottom = 8.000000000000000000
       Size.Width = 340.000000000000000000
-      Size.Height = 404.000000000000000000
+      Size.Height = 372.000000000000000000
       Size.PlatformDefault = False
       Stroke.Color = claDarkgray
       XRadius = 8.000000000000000000
@@ -9627,7 +9628,7 @@ object WinDroidHwnd: TWinDroidHwnd
       Position.X = 8.000000000000000000
       Position.Y = 8.000000000000000000
       Size.Width = 340.000000000000000000
-      Size.Height = 81.000000000000000000
+      Size.Height = 113.000000000000000000
       Size.PlatformDefault = False
       Stroke.Color = claDarkgray
       XRadius = 8.000000000000000000
@@ -9640,7 +9641,7 @@ object WinDroidHwnd: TWinDroidHwnd
       object loWSAInfo: TLayout
         Align = Client
         Size.Width = 340.000000000000000000
-        Size.Height = 81.000000000000000000
+        Size.Height = 113.000000000000000000
         Size.PlatformDefault = False
         TabOrder = 0
         object imgWSA: TImage
@@ -9665,38 +9666,41 @@ object WinDroidHwnd: TWinDroidHwnd
             end>
           Cursor = crHandPoint
           Position.X = 8.000000000000000000
-          Position.Y = 8.000000000000000000
+          Position.Y = 16.000000000000000000
           Size.Width = 49.000000000000000000
           Size.Height = 49.000000000000000000
           Size.PlatformDefault = False
           OnClick = imgWSAClick
+          object MonochromeEffect1: TMonochromeEffect
+          end
         end
         object lbWSAInfo: TLabel
-          StyledSettings = [Family, Style, FontColor]
+          StyledSettings = [Family, FontColor]
           Position.X = 72.000000000000000000
           Position.Y = 8.000000000000000000
           Size.Width = 249.000000000000000000
           Size.Height = 17.000000000000000000
           Size.PlatformDefault = False
           TextSettings.Font.Size = 11.000000000000000000
+          TextSettings.Font.StyleExt = {00070000000000000004000000}
           Text = 'Windows Subsytem for Android '#8482' (not found)'
-          TabOrder = 5
+          TabOrder = 7
         end
         object lbWSAMUI: TLabel
           StyledSettings = [Family, Style, FontColor]
           Position.X = 72.000000000000000000
-          Position.Y = 24.000000000000000000
+          Position.Y = 72.000000000000000000
           Size.Width = 233.000000000000000000
           Size.Height = 17.000000000000000000
           Size.PlatformDefault = False
-          TextSettings.Font.Size = 11.000000000000000000
+          TextSettings.Font.Size = 10.000000000000000000
           Text = 'AppModelUserId (not found)'
-          TabOrder = 4
+          TabOrder = 6
         end
         object lbWSAVersion: TLabel
           StyledSettings = [Family, Style, FontColor]
           Position.X = 72.000000000000000000
-          Position.Y = 40.000000000000000000
+          Position.Y = 24.000000000000000000
           Size.Width = 249.000000000000000000
           Size.Height = 17.000000000000000000
           Size.PlatformDefault = False
@@ -9707,7 +9711,7 @@ object WinDroidHwnd: TWinDroidHwnd
         object lbWSAStatus: TLabel
           StyledSettings = [Family, Style, FontColor]
           Position.X = 8.000000000000000000
-          Position.Y = 48.000000000000000000
+          Position.Y = 56.000000000000000000
           Size.Width = 49.000000000000000000
           Size.Height = 25.000000000000000000
           Size.PlatformDefault = False
@@ -9719,7 +9723,7 @@ object WinDroidHwnd: TWinDroidHwnd
         object lbWSAForeground: TLabel
           StyledSettings = [Family, FontColor]
           Position.X = 72.000000000000000000
-          Position.Y = 56.000000000000000000
+          Position.Y = 88.000000000000000000
           Size.Width = 249.000000000000000000
           Size.Height = 17.000000000000000000
           Size.PlatformDefault = False
@@ -9727,19 +9731,41 @@ object WinDroidHwnd: TWinDroidHwnd
           TextSettings.Font.StyleExt = {00040000000200000004000000}
           TabOrder = 1
         end
+        object lbWSAMinWinVer: TLabel
+          StyledSettings = [Family, Style, FontColor]
+          Position.X = 72.000000000000000000
+          Position.Y = 40.000000000000000000
+          Size.Width = 233.000000000000000000
+          Size.Height = 17.000000000000000000
+          Size.PlatformDefault = False
+          TextSettings.Font.Size = 11.000000000000000000
+          Text = 'Minimum Windows Build (not found)'
+          TabOrder = 5
+        end
+        object lbWSAPublisher: TLabel
+          StyledSettings = [Family, Style, FontColor]
+          Position.X = 72.000000000000000000
+          Position.Y = 56.000000000000000000
+          Size.Width = 233.000000000000000000
+          Size.Height = 17.000000000000000000
+          Size.PlatformDefault = False
+          TextSettings.Font.Size = 11.000000000000000000
+          Text = 'Publisher (not found)'
+          TabOrder = 4
+        end
       end
     end
     object ksTabControl1: TksTabControl
       Align = Client
       Appearence.BackgroundColor = claNull
       Appearence.Theme = ksTbCustom
-      TabIndex = 0
+      TabIndex = 3
       Margins.Left = 15.000000000000000000
       Margins.Top = 15.000000000000000000
       Margins.Right = 15.000000000000000000
       Margins.Bottom = 15.000000000000000000
       Size.Width = 326.000000000000000000
-      Size.Height = 390.000000000000000000
+      Size.Height = 358.000000000000000000
       Size.PlatformDefault = False
       object ksTabItem0: TksTabItem
         Text = 'Apps'
@@ -9796,7 +9822,7 @@ object WinDroidHwnd: TWinDroidHwnd
           Margins.Right = 4.000000000000000000
           PopupMenu = PopupMenu1
           Size.Width = 318.000000000000000000
-          Size.Height = 314.000000000000000000
+          Size.Height = 282.000000000000000000
           Size.PlatformDefault = False
           TabOrder = 0
           ParentShowHint = False
@@ -9807,6 +9833,7 @@ object WinDroidHwnd: TWinDroidHwnd
           ItemAppearanceObjects.HeaderObjects.Text.Font.Size = 11.000000000000000000
           ItemAppearanceObjects.FooterObjects.Text.Font.Size = 11.000000000000000000
           CanSwipeDelete = False
+          OnItemClickEx = ListView1ItemClickEx
           OnButtonClick = ListView1ButtonClick
           SearchVisible = True
         end
@@ -9834,20 +9861,20 @@ object WinDroidHwnd: TWinDroidHwnd
           Margins.Right = 8.000000000000000000
           Margins.Bottom = 8.000000000000000000
           Size.Width = 310.000000000000000000
-          Size.Height = 324.000000000000000000
+          Size.Height = 292.000000000000000000
           Size.PlatformDefault = False
           TabIndex = 0
           TabOrder = 1
           TabPosition = PlatformDefault
           Sizes = (
             310s
-            298s
+            266s
             310s
-            298s
+            266s
             310s
-            298s
+            266s
             310s
-            298s)
+            266s)
           object TabItem3: TTabItem
             CustomIcon = <
               item
@@ -10233,13 +10260,6 @@ object WinDroidHwnd: TWinDroidHwnd
     Left = 175
     Top = 295
   end
-  object DosCommand1: TDosCommand
-    InputToOutput = False
-    MaxTimeAfterBeginning = 0
-    MaxTimeAfterLastOutput = 0
-    Left = 104
-    Top = 320
-  end
   object PopupMenu1: TPopupMenu
     OnPopup = PopupMenu1Popup
     Left = 168
@@ -10262,7 +10282,7 @@ object WinDroidHwnd: TWinDroidHwnd
   end
   object Lang1: TLang
     AutoSelect = False
-    Left = 168
+    Left = 64
     Top = 224
     ResourcesBin = {
       3401000041007000700073000D000A0052006500660072006500730068002000
@@ -10322,5 +10342,12 @@ object WinDroidHwnd: TWinDroidHwnd
   object OpenDialog1: TOpenDialog
     Left = 176
     Top = 232
+  end
+  object DosCommand1: TDosCommand
+    InputToOutput = False
+    MaxTimeAfterBeginning = 0
+    MaxTimeAfterLastOutput = 0
+    Left = 104
+    Top = 320
   end
 end

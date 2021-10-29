@@ -1,12 +1,17 @@
 program W1nDro1d;
 
+{$R *.dres}
+
 uses
+
+  Vcl.Forms,
   System.StartUpCopy,
   FMX.Forms,
   FMX.Platform.Win,
   System.SysUtils,
   Winapi.Windows,
-  main in 'main.pas' {WinDroidHwnd};
+  main in 'main.pas' {WinDroidHwnd},
+  frmApkInstaller in 'frmApkInstaller.pas' {frmInstaller};
 
 {$R *.res}
 
@@ -22,6 +27,7 @@ begin
 
   Application.Initialize;
   Application.CreateForm(TWinDroidHwnd, WinDroidHwnd);
+  Application.CreateForm(TfrmInstaller, frmInstaller);
   Application.RealCreateForms;
   Application.MainForm.Visible := False;
   Application.Run;
