@@ -32,6 +32,7 @@ object frmWeb: TfrmWeb
         Height = 457
         Align = alClient
         TabOrder = 0
+        OnNewWindow2 = WebBrowser1NewWindow2
         ExplicitWidth = 702
         ExplicitHeight = 483
         ControlData = {
@@ -90,8 +91,6 @@ object frmWeb: TfrmWeb
         Status = ''
         ProgressTop = 'Message 1'
         ProgressBottom = '0kb/s'
-        ExplicitTop = 423
-        ExplicitWidth = 702
       end
     end
   end

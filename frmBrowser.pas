@@ -7,9 +7,10 @@ uses
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, WebView2, Winapi.ActiveX, Vcl.Edge,
   Vcl.OleCtrls, SHDocVw, SHDocVw_EWB, EwbCore, EmbeddedWB, IEDownload,
   IEMultiDownload, UrlMon, Vcl.ExtCtrls, UWP.Downloader, Vcl.WinXPanels,
-  Vcl.ComCtrls;
+  Vcl.ComCtrls, Winapi.Mshtmhst;
 
 const
+  DOCHOSTUIFLAG_DPI_AWARE = $40000000;
   IID_IDownloadManager: TGUID = '{988934A4-064B-11D3-BB80-00104B35E7F9}';
   SID_IDownloadManager: TGUID = '{988934A4-064B-11D3-BB80-00104B35E7F9}';
 
@@ -21,9 +22,11 @@ type
       grfBINDF: DWORD; pBindInfo: PBindInfo; pszHeaders: PWideChar;
       pszRedir: PWideChar; uiCP: UINT): HRESULT; stdcall;
   end;
+
   TBeforeFileDownloadEvent = procedure(Sender: TObject; const FileSource: WideString;
     var Allowed: Boolean) of Object;
-  TWebBrowser = class(SHDocVw.TWebBrowser, IServiceProvider, IDownloadManager)
+
+  TWebBrowser = class(SHDocVw.TWebBrowser, IServiceProvider, IDownloadManager, IDocHostUIHandler)
   private
     FFileSource: WideString;
     FOnBeforeFileDownload: TBeforeFileDownloadEvent;
@@ -31,6 +34,11 @@ type
     function Download(pmk: IMoniker; pbc: IBindCtx; dwBindVerb: DWORD;
       grfBINDF: DWORD; pBindInfo: PBindInfo; pszHeaders: PWideChar;
       pszRedir: PWideChar; uiCP: UINT): HRESULT; stdcall;
+
+    // handling special chars
+    procedure CNChar(var Msg: TWMChar); message CN_CHAR;
+    // making webbrowser DPI aware https://stackoverflow.com/a/63810030
+    function GetHostInfo(var pInfo: TDocHostUIInfo): HRESULT; stdcall;
   protected
     procedure InvokeEvent(ADispID: TDispID; var AParams: TDispParams); override;
   published
@@ -45,6 +53,8 @@ type
     TabSheet2: TTabSheet;
     procedure FormCreate(Sender: TObject);
     procedure UWPDownloader1Downloaded(Sender: TObject; DownloadCode: Integer);
+    procedure WebBrowser1NewWindow2(ASender: TObject; var ppDisp: IDispatch;
+      var Cancel: WordBool);
   private
     { Private declarations }
     procedure BeforeFileDownload(Sender: TObject; const FileSource: WideString;
@@ -113,7 +123,19 @@ begin
   ShowMessage('File Downloaded!');
 end;
 
+// prevent opening links in MSEdge
+procedure TfrmWeb.WebBrowser1NewWindow2(ASender: TObject; var ppDisp: IDispatch;
+  var Cancel: WordBool);
+begin
+  Cancel := True;
+end;
+
 { TWebBrowser }
+
+procedure TWebBrowser.CNChar(var Msg: TWMChar);
+begin
+  Msg.Result := 0;
+end;
 
 function TWebBrowser.Download(pmk: IMoniker; pbc: IBindCtx; dwBindVerb,
   grfBINDF: DWORD; pBindInfo: PBindInfo; pszHeaders, pszRedir: PWideChar;
@@ -131,6 +153,18 @@ begin
     if not Allowed then
       Result := S_OK;
   end;
+end;
+
+function TWebBrowser.GetHostInfo(var pInfo: TDocHostUIInfo): HRESULT;
+begin
+  // original code
+  pInfo.cbSize := SizeOf(pInfo);
+  pInfo.dwFlags := 0;
+  pInfo.dwFlags := pInfo.dwFlags or DOCHOSTUIFLAG_NO3DBORDER;
+  pInfo.dwFlags := pInfo.dwFlags or DOCHOSTUIFLAG_THEME;
+  pInfo.dwFlags := pInfo.dwFlags or DOCHOSTUIFLAG_DPI_AWARE; // NEW added flag
+  Result := S_OK;
+//  ResizeScrollBars; // will be called by subsequent routines anyway
 end;
 
 procedure TWebBrowser.InvokeEvent(ADispID: TDispID; var AParams: TDispParams);
