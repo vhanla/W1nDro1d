@@ -79,7 +79,7 @@ var
 implementation
 
 uses
-  Winapi.ShellAPI, WSAManager;
+  Winapi.ShellAPI, WSAManager, UWP.ColorManager;
 
 {$R *.dfm}
 
@@ -97,7 +97,7 @@ procedure TfrmInstaller.FormCreate(Sender: TObject);
 begin
 //  pnlCaption.Height := GetSystemMetrics(SM_CYCAPTION) + GetSystemMetrics(SM_CXBORDER);
 //  pnlAbout.Rounded := True;
-
+  ColorizationManager.ColorizationType :=  TUWPColorizationType.ctLight;
 end;
 
 procedure TfrmInstaller.lnkRepositoryLinkClick(Sender: TObject;

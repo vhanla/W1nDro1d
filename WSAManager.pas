@@ -244,7 +244,8 @@ uses
   Winapi.PsAPI, Winapi.DwmApi, Winapi.MultiMon,
   Winapi.ShellAPI, System.Win.Registry, Winapi.msxml, System.IOUtils,
   Winapi.KnownFolders, Winapi.ShlObj, Winapi.ActiveX, System.Win.ComObj,
-  Winapi.PropKey, Winapi.oleacc, System.Threading, frmBrowser;
+  Winapi.PropKey, Winapi.oleacc, System.Threading, frmBrowser,
+  UWP.ColorManager;
 
 const
   WM_TOGGLEFULLSCREEN = WM_USER + 9;
@@ -778,6 +779,7 @@ begin
 //  SetWindowLong(Handle, GWL_EXSTYLE, GetWindowLong(Handle, GWL_EXSTYLE) and not WS_EX_APPWINDOW);
 //  AnimateWindow(Handle, 250, AW_CENTER);
 //  Lang1.Lang := 'es';
+  ColorizationManager.ColorizationType :=  TUWPColorizationType.ctLight;
 
   AppsClasses := TStringList.Create;
   AppsClassesSearchFilter := TStringList.Create;
