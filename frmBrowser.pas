@@ -69,16 +69,35 @@ var
 implementation
 
 uses
-  System.Net.HttpClient, IdHTTP, helperFuncs;
+  System.Net.HttpClient, {IdHTTP,} helperFuncs;
 
 {$R *.dfm}
 
 procedure TfrmWeb.BeforeFileDownload(Sender: TObject;
   const FileSource: WideString; var Allowed: Boolean);
+  function GetAttachmentFilename(CD: string): string;
+  var
+    fq, sq: Integer;
+  begin
+    Result := 'fileattachment';
+    if CD.Contains('filename') then // e.g. Content-Disposition returns: attachment; filename="filename.ext"
+    begin
+      fq := Pos('"', CD);
+      sq := Pos('"', CD, fq + 1);
+      if (fq > 0) and (sq > 0) and (sq > fq) then
+      begin
+        Result := Copy(CD, fq + 1, sq - fq - 1);
+      end;
+
+    end;
+
+  end;
 var
   FileTarget: string;
   LUrl: string;
-  Http: TIdHTTP;
+//  Http: TIdHTTP;
+  Client: THTTPClient;
+  Response: IHTTPResponse;
 begin
   Allowed := False;
 //  ShowMessage(FileSource);
@@ -86,26 +105,35 @@ begin
   if LUrl = '' then Exit;
 
   Var domain := ExtractDomain(LUrl);
-  Http := TIdHTTP.Create(nil);
+  Client := THTTPClient.Create;
+//  Http := TIdHTTP.Create(nil);
   try
-    Http.Head(LUrl);
-    var fName := Http.Response.RawHeaders.Params['Content-Disposition', 'filename'];
-    var Prompt := Format('You chose to download: '#13#10'%s '#13#10'Size: %s '#13#10'From %s. '#13#10''#13#10'Continue?',
-    [
-      fName,
-      FormatFileSize(Http.Response.ContentLength),
-      domain
-    ]);
-    if MessageDlg(Prompt,TMsgDlgType.mtConfirmation, mbYesNo, 0) = mrYes then
+    try
+      Response := Client.Head(LUrl, nil);
+    except
+    end;
+//    Http.Head(LUrl);
+    if Assigned(Response) and (Response.StatusCode = 200) and (Response.ContentLength > 0) then
     begin
-      UWPDownloader1.SavePath := ExtractFilePath(ParamStr(0)) + 'Downloads\' + fName;
-      UWPDownloader1.Detail := fName;
-      UWPDownloader1.URL := LUrl;
-      UWPDownloader1.DoStartDownload;
-      PageControl1.SelectNextPage(True);
+      var fName := GetAttachmentFilename(Response.HeaderValue['Content-Disposition']); //Http.Response.RawHeaders.Params['Content-Disposition', 'filename'];
+      var Prompt := Format('You chose to download: '#13#10'%s '#13#10'Size: %s '#13#10'From %s. '#13#10''#13#10'Continue?',
+      [
+        fName,
+        FormatFileSize(Response.ContentLength),//Http.Response.ContentLength),
+        domain
+      ]);
+      if MessageDlg(Prompt,TMsgDlgType.mtConfirmation, mbYesNo, 0) = mrYes then
+      begin
+        UWPDownloader1.SavePath := ExtractFilePath(ParamStr(0)) + 'Downloads\' + fName;
+        UWPDownloader1.Detail := fName;
+        UWPDownloader1.URL := LUrl;
+        UWPDownloader1.DoStartDownload;
+        PageControl1.SelectNextPage(True);
+      end;
     end;
   finally
-    Http.Free;
+    Client.Free;
+//    Http.Free;
   end;
 
 
