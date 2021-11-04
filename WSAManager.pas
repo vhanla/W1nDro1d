@@ -245,7 +245,7 @@ uses
   Winapi.ShellAPI, System.Win.Registry, Winapi.msxml, System.IOUtils,
   Winapi.KnownFolders, Winapi.ShlObj, Winapi.ActiveX, System.Win.ComObj,
   Winapi.PropKey, Winapi.oleacc, System.Threading, frmBrowser,
-  UWP.ColorManager;
+  UWP.ColorManager, helperFuncs;
 
 const
   WM_TOGGLEFULLSCREEN = WM_USER + 9;
@@ -875,7 +875,7 @@ begin
       lbCapabilities.Caption := 'Details: ';
       apkInstallerMemo.Lines.Clear;      
       apkInstallerMemo.Lines.Add('Install Date: ' + ApkInfo.InstallDate);      
-      apkInstallerMemo.Lines.Add('Estimated Size: ' + IntToStr(ApkInfo.EstimatedSize) + 'KB');
+      apkInstallerMemo.Lines.Add('Estimated Size: ' + FormatFileSize(ApkInfo.EstimatedSize*1024));
       var logoPath := StringReplace(ApkInfo.DisplayIcon, '.ico', '.png', [rfReplaceAll]); 
       if FileExists(logoPath) then
         eApkImage.Picture.LoadFromFile(logoPath);
