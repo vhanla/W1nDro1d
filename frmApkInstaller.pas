@@ -7,7 +7,7 @@ uses
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls,
   Vcl.TitleBarCtrls, UWP.Form, UWP.QuickButton, UWP.Caption, UWP.Button,
   Vcl.WinXCtrls, DosCommand, SynEditHighlighter, SynHighlighterUNIXShellScript,
-  SynEdit;
+  SynEdit, ES.BaseControls, ES.Images;
 
 type
   TPanel = class(Vcl.ExtCtrls.TPanel)
@@ -32,15 +32,14 @@ type
 
 
   TfrmInstaller = class(TUWPForm)
-    btnReInstall: TButton;
+    btnReUnInstall: TButton;
     btnLaunch: TButton;
-    Image1: TImage;
     lbAPKDisplayName: TLabel;
     lbPublisher: TLabel;
     lbVersion: TLabel;
     lbCertificate: TLabel;
     lbCapabilities: TLabel;
-    Memo1: TMemo;
+    apkInstallerMemo: TMemo;
     UWPQuickButton1: TUWPQuickButton;
     UWPQuickButton2: TUWPQuickButton;
     UWPQuickButton3: TUWPQuickButton;
@@ -57,6 +56,7 @@ type
     DosCommand1: TDosCommand;
     SynEdit1: TSynEdit;
     SynUNIXShellScriptSyn1: TSynUNIXShellScriptSyn;
+    eApkImage: TEsImage;
     procedure pnlCaptionMouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
     procedure FormCreate(Sender: TObject);
@@ -79,7 +79,7 @@ var
 implementation
 
 uses
-  Winapi.ShellAPI;
+  Winapi.ShellAPI, WSAManager;
 
 {$R *.dfm}
 

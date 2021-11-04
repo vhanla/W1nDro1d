@@ -13,7 +13,8 @@ uses
   System.Types, System.UITypes,
   // TrayIcon
   DosCommand, Net.HTTPClient, Winapi.IpHlpApi, Vcl.Imaging.pngimage,
-  Vcl.BaseImageCollection, Vcl.ImageCollection, Data.DB, Datasnap.DBClient;
+  Vcl.BaseImageCollection, Vcl.ImageCollection, Data.DB, Datasnap.DBClient,
+  Vcl.ComCtrls;
 
 const  // hard coded paths, for now located in the same directory where this application runs
 { TODO : Add proper directories handling specially when this applications install in ProgramFiles or other restricted directories }
@@ -27,6 +28,21 @@ type
     ADBPath: string;
     DownloadsPath: string;
 
+  end;
+
+  TAPKInfo = record
+    AndroidPackageName: string;
+    AndroidVersionCode: string;
+    DisplayIcon: string;
+    DisplayName: string;
+    DisplayVersion: string;
+    EstimatedSize: Integer;
+    InstallDate: string;
+    ModifyPath: string;
+    NoRepair: Integer;
+    Publisher: string;
+    QuietUninstallString: string;
+    UninstalString: string;
   end;
 
   TWSA = record
@@ -113,7 +129,6 @@ type
     ControlListButton1: TControlListButton;
     ControlListButton2: TControlListButton;
     DzDirSeek1: TDzDirSeek;
-    SVGIconImageList1: TSVGIconImageList;
     pnlWSAState: TPanel;
     Image1: TImage;
     lbWSAInfo: TLabel;
@@ -137,6 +152,23 @@ type
     About2: TMenuItem;
     Exit2: TMenuItem;
     ImageList1: TImageList;
+    leADBPath: TLabeledEdit;
+    btnSearchADBPath: TButton;
+    btnDownloadADB: TButton;
+    ProgressBar1: TProgressBar;
+    LabeledEdit1: TLabeledEdit;
+    Button1: TButton;
+    CheckBox1: TCheckBox;
+    CheckBox2: TCheckBox;
+    CheckBox3: TCheckBox;
+    WSAIncludedPackages1: TMenuItem;
+    Files1: TMenuItem;
+    DebuggingOptions1: TMenuItem;
+    Gallery1: TMenuItem;
+    Contacts1: TMenuItem;
+    ManageAPK1: TMenuItem;
+    SearchInstallAPKs1: TMenuItem;
+    SearchUpdates1: TMenuItem;
     procedure Exit1Click(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure FormCreate(Sender: TObject);
@@ -150,6 +182,21 @@ type
       var Handled: Boolean);
     procedure SpeedButton2Click(Sender: TObject);
     procedure ControlList1Click(Sender: TObject);
+    procedure btnDownloadADBClick(Sender: TObject);
+    procedure SpeedButton1Click(Sender: TObject);
+    procedure SpeedButton3Click(Sender: TObject);
+    procedure SpeedButton4Click(Sender: TObject);
+    procedure GetAPKInfo1Click(Sender: TObject);
+    procedure UninstallAPK1Click(Sender: TObject);
+    procedure ControlList1DblClick(Sender: TObject);
+    procedure Files1Click(Sender: TObject);
+    procedure DebuggingOptions1Click(Sender: TObject);
+    procedure Gallery1Click(Sender: TObject);
+    procedure Contacts1Click(Sender: TObject);
+    procedure ManageAPK1Click(Sender: TObject);
+    procedure RunAPK1Click(Sender: TObject);
+    procedure SearchInstallAPKs1Click(Sender: TObject);
+    procedure SearchUpdates1Click(Sender: TObject);
   protected
     // TaskbarLocation
     function GetMainTaskbarPosition: Integer;
@@ -162,15 +209,20 @@ type
     function IsWsaClientLnkTarget(value: string): Boolean;
     function IsWsaClientRunning:Boolean;
     procedure CheckWsaClientStatus;
+    procedure GetApkInfo(var Apk: TAPKInfo; const PackageName: string);
 
     procedure CreateParams(var Params: TCreateParams); override;
   private
     { Private declarations }
     WSA: TWSA;
-    AppList: TStringList;        
-    AppListSearchFilter: TStringList;        
+    ControlListIndex: Integer;
+    ControlListFiltered: Boolean;
+    AppList: TStringList;
+    AppListSearchFilter: TStringList;
   public
     { Public declarations }
+    ApkInfo: TAPKInfo;
+    procedure APKLaunch(const PackageName: string; specialUri: string = '/launch wsa://');
   end;
 
 var
@@ -192,7 +244,7 @@ uses
   Winapi.PsAPI, Winapi.DwmApi, Winapi.MultiMon,
   Winapi.ShellAPI, System.Win.Registry, Winapi.msxml, System.IOUtils,
   Winapi.KnownFolders, Winapi.ShlObj, Winapi.ActiveX, System.Win.ComObj,
-  Winapi.PropKey, Winapi.oleacc, System.Threading;
+  Winapi.PropKey, Winapi.oleacc, System.Threading, frmBrowser;
 
 const
   WM_TOGGLEFULLSCREEN = WM_USER + 9;
@@ -371,6 +423,20 @@ begin
   Result := CallNextHookEx(WndProcHook, nCode, wParam, lParam);
 end;
 
+procedure TfrmWinDroid.APKLaunch(const PackageName: string; specialUri: string = '/launch wsa://');
+begin
+  ShellExecute(0, 'OPEN', PChar(WSA.InstallPath + WSA.WsaClient), PChar(specialUri+PackageName), nil, SW_SHOWNORMAL);
+end;
+
+procedure TfrmWinDroid.btnDownloadADBClick(Sender: TObject);
+var
+  pv: IShellItem;
+  pv13: Int64;
+begin
+  SHCreateItemFromParsingName('', nil, IID_IShellItem, pv);
+  CoCreateInstance(CLSID_StartMenuPin, nil, 1, IID_IStartMenuPinnedList, pv13);
+end;
+
 procedure TfrmWinDroid.btnListAppsClick(Sender: TObject);
 //var
 //  LStyleName: string;
@@ -513,13 +579,41 @@ begin
                       var ims := TMemoryStream.Create;
                       var bmp := TBitmap.Create;
                       try
-                        bmp.SetSize(icon.Width, icon.Height);
-                        bmp.PixelFormat := pf32bit;
-                        if DrawIcon(bmp.Canvas.Handle, 0, 0, icon.Handle) then
+                        // prefer PNG files in localstate
+                        var png: TPngImage;
+                        var iconpath: string;
+                        var localpath: string;
+                        localpath := GetEnvironmentVariable('localappdata');//'%LOCALAPPDATA%');
+                        iconpath := localpath+'\Packages\MicrosoftCorporationII.WindowsSubsystemForAndroid_8wekyb3d8bbwe\LocalState\'+sa+'.png';
+                        if WSA.AppUserModelID <> '' then
                         begin
-                          bmp.SaveToStream(ims);
-                          ims.Position := 0;
-                          ImageCollection1.Add(sa, ims);
+                          var amui := Copy(WSA.AppUserModelID, 1, Pos('!', WSA.AppUserModelID)-1);
+                          iconpath := localpath+'\Packages\'+amui+'\LocalState\'+sa+'.png';
+                        end;
+
+                        if FileExists(iconpath) then
+                        begin
+                          png := TPngImage.Create;
+                          try
+                            png.LoadFromFile(iconpath);
+                            bmp.Assign(png);
+                            bmp.SaveToStream(ims);
+                            ims.Position := 0;
+                            ImageCollection1.Add(sa, ims);
+                          finally
+                            png.Free;
+                          end;
+                        end
+                        else
+                        begin
+                          bmp.SetSize(icon.Width, icon.Height);
+                          bmp.PixelFormat := pf32bit;
+                          if DrawIcon(bmp.Canvas.Handle, 0, 0, icon.Handle) then
+                          begin
+                            bmp.SaveToStream(ims);
+                            ims.Position := 0;
+                            ImageCollection1.Add(sa, ims);
+                          end;
                         end;
                       finally
                         bmp.Free;
@@ -582,10 +676,15 @@ begin
   {TODO: MonochromeEffect1.Enabled :=  not state;}
 end;
 
+procedure TfrmWinDroid.Contacts1Click(Sender: TObject);
+begin
+  APKLaunch('com.android.contacts');
+end;
+
 procedure TfrmWinDroid.ControlList1BeforeDrawItem(AIndex: Integer;
   ACanvas: TCanvas; ARect: TRect; AState: TOwnerDrawState);
 begin
-  if (Trim(SearchBox1.Text) <> '') and (AppListSearchFilter.Count > 0) 
+  if ControlListFiltered and (AppListSearchFilter.Count > 0)
   and (AppsClassesSearchFilter.Count > 0)
   then
   begin
@@ -610,13 +709,14 @@ end;
 procedure TfrmWinDroid.ControlList1ContextPopup(Sender: TObject;
   MousePos: TPoint; var Handled: Boolean);
 begin
-  if Trim(SearchBox1.Text) = '' then
+  ControlListIndex := ControlList1.HotItemIndex;
+  if not ControlListFiltered then
   begin
     if ControlList1.HotItemIndex >= 0 then
     begin
       ImageList1.BeginUpdate;
       ImageList1.Clear;
-      ImageList1.Add(ImageCollection1.GetBitmap(AppsClasses.Names[ControlList1.HotItemIndex], 16, 16),nil);
+      ImageList1.Add(ImageCollection1.GetBitmap(AppsClasses.Names[ControlList1.HotItemIndex], 24, 24),nil);
       ImageList1.EndUpdate;
       RunAPK1.Caption := 'Launch ' + AppList.Names[ControlList1.HotItemIndex];
       RunAPK1.ImageIndex := 0;
@@ -636,6 +736,21 @@ begin
   end;
 end;
 
+procedure TfrmWinDroid.ControlList1DblClick(Sender: TObject);
+begin
+  if (ControlList1.HotItemIndex >= 0) and (ControlList1.ItemCount > 0)
+  then
+  begin
+    if ControlListFiltered then
+      APKLaunch(AppsClassesSearchFilter.Names[ControlList1.HotItemIndex])
+    else
+    begin
+      APKLaunch(AppsClasses.Names[ControlList1.HotItemIndex]);
+    end;
+
+  end;
+end;
+
 procedure TfrmWinDroid.CreateParams(var Params: TCreateParams);
 begin
   inherited;
@@ -643,9 +758,19 @@ begin
   Params.WinClassName := 'FMTWinDroidHwnd';
 end;
 
+procedure TfrmWinDroid.DebuggingOptions1Click(Sender: TObject);
+begin
+  APKLaunch('developer-settings', '/deeplink wsa-client://');
+end;
+
 procedure TfrmWinDroid.Exit1Click(Sender: TObject);
 begin
   Close;
+end;
+
+procedure TfrmWinDroid.Files1Click(Sender: TObject);
+begin
+  APKLaunch('com.android.documentsui');
 end;
 
 procedure TfrmWinDroid.FormCreate(Sender: TObject);
@@ -670,6 +795,8 @@ begin
 //  lbWSAPublisher.Caption := 'Publisher: ' + WSA.PublisherDisplayName;
 
 //  FHookWndHandle := AllocateHWnd(WndMethod);
+
+  ControlListFiltered := False;
 
   // detect window change foreground
   Hook := SetWinEventHook(EVENT_MIN, EVENT_MAX, 0, @WinEventProc, 0, 0, WINEVENT_OUTOFCONTEXT or WINEVENT_SKIPOWNPROCESS);
@@ -697,6 +824,63 @@ end;
 procedure TfrmWinDroid.FormShow(Sender: TObject);
 begin
   ShowWindow(Application.Handle, SW_HIDE);
+end;
+
+procedure TfrmWinDroid.Gallery1Click(Sender: TObject);
+begin
+  APKLaunch('com.android.gallery3d');
+end;
+
+procedure TfrmWinDroid.GetApkInfo(var Apk: TAPKInfo; const PackageName: string);
+var
+  reg: TRegistry;
+begin
+  reg := TRegistry.Create;
+  try
+    reg.RootKey := HKEY_CURRENT_USER;
+    if reg.OpenKeyReadOnly('Software\Microsoft\Windows\CurrentVersion\Uninstall\'+PackageName) then
+    begin
+      ApkInfo.AndroidPackageName := reg.ReadString('AndroidPackageName');
+      ApkInfo.AndroidVersionCode := reg.ReadString('AndroidVersionCode');
+      ApkInfo.DisplayIcon := reg.ReadString('DisplayIcon');
+      ApkInfo.DisplayName := reg.ReadString('DisplayName');
+      ApkInfo.DisplayVersion := reg.ReadString('DisplayVersion');
+      ApkInfo.EstimatedSize := reg.ReadInteger('EstimatedSize');
+      ApkInfo.InstallDate := reg.ReadString('InstallDate');
+      ApkInfo.Publisher := reg.ReadString('Publisher');
+      
+      reg.CloseKey;
+    end;
+
+  finally
+    reg.Free;
+  end;
+end;
+
+procedure TfrmWinDroid.GetAPKInfo1Click(Sender: TObject);
+begin
+  if (ControlList1.ItemCount > 0) and (ControlListIndex >= 0) then
+  begin
+    if ControlListFiltered then
+      GetApkInfo(ApkInfo, AppsClassesSearchFilter.Names[ControlListIndex])
+    else
+      GetApkInfo(ApkInfo, AppsClasses.Names[ControlListIndex]);
+    with frmInstaller do
+    begin
+      lbAPKDisplayName.Caption := ApkInfo.DisplayName;
+      lbPublisher.Caption := 'Publisher: ' + ApkInfo.Publisher;
+      lbVersion.Caption := 'Version: ' + ApkInfo.DisplayVersion;  
+      lbCapabilities.Caption := 'Details: ';
+      apkInstallerMemo.Lines.Clear;      
+      apkInstallerMemo.Lines.Add('Install Date: ' + ApkInfo.InstallDate);      
+      apkInstallerMemo.Lines.Add('Estimated Size: ' + IntToStr(ApkInfo.EstimatedSize) + 'KB');
+      var logoPath := StringReplace(ApkInfo.DisplayIcon, '.ico', '.png', [rfReplaceAll]); 
+      if FileExists(logoPath) then
+        eApkImage.Picture.LoadFromFile(logoPath);
+      btnReUnInstall.Caption := 'Uninstall';
+    end;
+    frmInstaller.Show;
+  end;
 end;
 
 function TfrmWinDroid.GetMainTaskbarPosition: Integer;
@@ -937,9 +1121,29 @@ begin
 
 end;
 
+procedure TfrmWinDroid.ManageAPK1Click(Sender: TObject);
+begin
+  if (ControlListIndex >= 0) and (ControlList1.ItemCount > 0)
+  then
+  begin
+    if ControlListFiltered then
+      APKLaunch(AppsClassesSearchFilter.Names[ControlListIndex], '/modify ')
+    else
+    begin
+      APKLaunch(AppsClasses.Names[ControlListIndex], '/modify ');
+    end;
+
+  end;
+end;
+
 function TfrmWinDroid.ReplaceAmazonAppstore: Boolean;
 begin
 //https://amazonadsi-a.akamaihd.net/public/ix/stable/default/us/Amazon_App.apk
+end;
+
+procedure TfrmWinDroid.RunAPK1Click(Sender: TObject);
+begin
+  ControlList1DblClick(Sender);
 end;
 
 procedure TfrmWinDroid.SearchBox1Change(Sender: TObject);
@@ -949,6 +1153,7 @@ var
 begin
   if Trim(SearchBox1.Text) <> '' then
   begin
+    ControlListFiltered := True;
     AppsClassesSearchFilter.BeginUpdate;
     AppsClassesSearchFilter.Clear;
     AppListSearchFilter.BeginUpdate;
@@ -958,18 +1163,55 @@ begin
       filter := LowerCase(Trim(SearchBox1.Text));
       text := LowerCase(Trim(AppList.Names[I]));
       if text.Contains(filter) then
-      begin        
+      begin
         AppListSearchFilter.AddPair(AppList.Names[I], AppList.ValueFromIndex[I]);
         AppsClassesSearchFilter.AddPair(AppsClasses.Names[I], AppsClasses.Names[I]);
       end;
     end;
     AppListSearchFilter.EndUpdate;
-    AppsClassesSearchFilter.EndUpdate;    
+    AppsClassesSearchFilter.EndUpdate;
     ControlList1.ItemCount := AppListSearchFilter.Count;
-    ControlList1.Refresh;    
+    ControlList1.Refresh;
   end
   else
+  begin
+    ControlListFiltered := False;
     ControlList1.ItemCount := AppList.Count;
+  end;
+end;
+
+procedure TfrmWinDroid.SearchInstallAPKs1Click(Sender: TObject);
+begin
+  frmWeb.WebBrowser1.Navigate('about:blank');
+  frmWeb.Show;
+  frmWeb.WebBrowser1.Navigate('https://apkpure.com');
+  frmWeb.PageControl1.ActivePage := frmWeb.TabSheet1;
+//  frmWeb.EmbeddedWB1.Navigate('https://apkpure.com');
+end;
+
+procedure TfrmWinDroid.SearchUpdates1Click(Sender: TObject);
+var
+  LPackageName: string;
+begin
+  if (ControlList1.ItemCount > 0) and (ControlListIndex >= 0) then
+  begin
+    if ControlListFiltered then
+      LPackageName := AppsClassesSearchFilter.Names[ControlListIndex]
+    else
+      LPackageName := AppsClasses.Names[ControlListIndex];
+    frmWeb.WebBrowser1.Navigate('about:blank');
+    frmWeb.Show;
+    GetApkInfo(ApkInfo, LPackageName);
+    frmWeb.Caption := Format('Search update for: %s - Installed version: %s', [ApkInfo.DisplayName, ApkInfo.DisplayVersion]);
+    frmWeb.WebBrowser1.Navigate('https://apkpure.com/en/'+LPackageName);
+    frmWeb.PageControl1.ActivePage := frmWeb.TabSheet1;
+  end;
+
+end;
+
+procedure TfrmWinDroid.SpeedButton1Click(Sender: TObject);
+begin
+  crdContainer.ActiveCard := crdApps;
 end;
 
 procedure TfrmWinDroid.SpeedButton2Click(Sender: TObject);
@@ -977,9 +1219,39 @@ begin
   frmApkInstaller.frmInstaller.Show;
 end;
 
+procedure TfrmWinDroid.SpeedButton3Click(Sender: TObject);
+begin
+  crdContainer.ActiveCard := crdMisc;
+end;
+
+procedure TfrmWinDroid.SpeedButton4Click(Sender: TObject);
+begin
+  crdContainer.ActiveCard := crdSettings;
+end;
+
 procedure TfrmWinDroid.TrayIcon1Click(Sender: TObject);
 begin
   Visible := not Visible;
+end;
+
+procedure TfrmWinDroid.UninstallAPK1Click(Sender: TObject);
+var
+  LPackageName: string;
+begin
+  if (ControlListIndex >= 0) and (ControlList1.ItemCount > 0) then
+  begin
+    if ControlListFiltered then
+      LPackageName := AppsClassesSearchFilter.Names[ControlListIndex]
+    else
+    begin
+      LPackageName := AppsClasses.Names[ControlListIndex];
+    end;
+    if MessageDlg('This will uninstall ' + LPackageName +#13#10'This procedure is irreversible. Are you sure to continue?', mtWarning, mbYesNo, 0) = mrYes then
+    begin
+      APKLaunch(LPackageName, '/uninstall ');
+      btnListAppsClick(Sender);
+    end;
+  end;
 end;
 
 { TDownloader }

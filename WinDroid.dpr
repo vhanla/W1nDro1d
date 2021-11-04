@@ -15,7 +15,9 @@ uses
   WSAManager in 'WSAManager.pas' {frmWinDroid},
   frmApkInstaller in 'frmApkInstaller.pas' {frmInstaller},
   Vcl.Themes,
-  Vcl.Styles;
+  Vcl.Styles,
+  frmBrowser in 'frmBrowser.pas' {frmWeb},
+  helperFuncs in 'helperFuncs.pas';
 
 {$R *.res}
 
@@ -35,5 +37,6 @@ begin
 //  Application.ShowMainForm := False;
   Application.CreateForm(TfrmWinDroid, frmWinDroid);
   Application.CreateForm(TfrmInstaller, frmInstaller);
+  Application.CreateForm(TfrmWeb, frmWeb);
   Application.Run;
 end.

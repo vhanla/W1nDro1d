@@ -23,14 +23,6 @@ object frmInstaller: TfrmInstaller
     445)
   PixelsPerInch = 96
   TextHeight = 15
-  object Image1: TImage
-    Left = 520
-    Top = 48
-    Width = 90
-    Height = 90
-    Anchors = [akTop, akRight]
-    Stretch = True
-  end
   object lbAPKDisplayName: TLabel
     Left = 24
     Top = 44
@@ -103,22 +95,12 @@ object frmInstaller: TfrmInstaller
     Font.Quality = fqClearTypeNatural
     ParentFont = False
   end
-  object btnReInstall: TButton
-    Left = 378
-    Top = 360
-    Width = 113
-    Height = 29
-    Anchors = [akRight, akBottom]
-    Caption = 'Install'
-    ElevationRequired = True
-    Font.Charset = DEFAULT_CHARSET
-    Font.Color = clWindowText
-    Font.Height = -13
-    Font.Name = 'Segoe UI Variable Display'
-    Font.Style = []
-    Font.Quality = fqClearTypeNatural
-    ParentFont = False
-    TabOrder = 0
+  object eApkImage: TEsImage
+    Left = 520
+    Top = 49
+    Width = 90
+    Height = 90
+    Stretch = Fill
   end
   object btnLaunch: TButton
     Left = 497
@@ -136,11 +118,11 @@ object frmInstaller: TfrmInstaller
     ParentFont = False
     TabOrder = 1
   end
-  object Memo1: TMemo
+  object apkInstallerMemo: TMemo
     Left = 24
     Top = 226
     Width = 409
-    Height = 146
+    Height = 143
     BevelInner = bvNone
     BevelOuter = bvNone
     BorderStyle = bsNone
@@ -339,7 +321,6 @@ object frmInstaller: TfrmInstaller
     Left = 304
     Top = 168
     Anchors = [akLeft, akTop, akRight, akBottom]
-    Animate = True
   end
   object Button1: TButton
     Left = 8
@@ -380,6 +361,23 @@ object frmInstaller: TfrmInstaller
     Highlighter = SynUNIXShellScriptSyn1
     Lines.Strings = (
       'SynEdit1')
+  end
+  object btnReUnInstall: TButton
+    Left = 378
+    Top = 360
+    Width = 113
+    Height = 29
+    Anchors = [akRight, akBottom]
+    Caption = 'Install'
+    ElevationRequired = True
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -13
+    Font.Name = 'Segoe UI Variable Display'
+    Font.Style = []
+    Font.Quality = fqClearTypeNatural
+    ParentFont = False
+    TabOrder = 0
   end
   object DosCommand1: TDosCommand
     InputToOutput = False

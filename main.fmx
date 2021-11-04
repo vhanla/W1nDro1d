@@ -9759,7 +9759,7 @@ object WinDroidHwnd: TWinDroidHwnd
       Align = Client
       Appearence.BackgroundColor = claNull
       Appearence.Theme = ksTbCustom
-      TabIndex = 3
+      TabIndex = 0
       Margins.Left = 15.000000000000000000
       Margins.Top = 15.000000000000000000
       Margins.Right = 15.000000000000000000

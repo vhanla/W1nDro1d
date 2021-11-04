@@ -26,7 +26,7 @@ object frmWinDroid: TfrmWinDroid
     Left = 12
     Top = 133
     Width = 368
-    Height = 461
+    Height = 415
     Align = alClient
     ActiveCard = crdApps
     BevelOuter = bvNone
@@ -35,7 +35,7 @@ object frmWinDroid: TfrmWinDroid
       Left = 0
       Top = 0
       Width = 368
-      Height = 461
+      Height = 415
       Caption = 'crdApps'
       CardIndex = 0
       TabOrder = 0
@@ -61,6 +61,7 @@ object frmWinDroid: TfrmWinDroid
         OnBeforeDrawItem = ControlList1BeforeDrawItem
         OnClick = ControlList1Click
         OnContextPopup = ControlList1ContextPopup
+        OnDblClick = ControlList1DblClick
         object lbListPackageName: TLabel
           AlignWithMargins = True
           Left = 65
@@ -180,141 +181,6 @@ object frmWinDroid: TfrmWinDroid
         StyleName = 'WinEleven'
         OnChange = SearchBox1Change
       end
-      object GridPanel1: TGridPanel
-        Left = 0
-        Top = 415
-        Width = 368
-        Height = 46
-        Align = alBottom
-        BevelOuter = bvNone
-        ColumnCollection = <
-          item
-            Value = 24.134362665037010000
-          end
-          item
-            Value = 24.738992247697230000
-          end
-          item
-            Value = 25.527879514108160000
-          end
-          item
-            Value = 25.598765573157600000
-          end>
-        ControlCollection = <
-          item
-            Column = 0
-            Control = SpeedButton1
-            Row = 0
-          end
-          item
-            Column = 1
-            Control = SpeedButton2
-            Row = 0
-          end
-          item
-            Column = 2
-            Control = SpeedButton3
-            Row = 0
-          end
-          item
-            Column = 3
-            Control = SpeedButton4
-            Row = 0
-          end>
-        RowCollection = <
-          item
-            Value = 100.000000000000000000
-          end>
-        TabOrder = 3
-        object SpeedButton1: TSpeedButton
-          Left = 0
-          Top = 0
-          Width = 89
-          Height = 46
-          Hint = 'Android Apps'
-          Align = alClient
-          Caption = #59165
-          Flat = True
-          Font.Charset = DEFAULT_CHARSET
-          Font.Color = clWindowText
-          Font.Height = -21
-          Font.Name = 'Segoe Fluent Icons'
-          Font.Style = []
-          Font.Quality = fqClearTypeNatural
-          ParentFont = False
-          ParentShowHint = False
-          ShowHint = True
-          ExplicitLeft = -6
-          ExplicitTop = 6
-          ExplicitWidth = 77
-        end
-        object SpeedButton2: TSpeedButton
-          Left = 89
-          Top = 0
-          Width = 91
-          Height = 46
-          Hint = 'Installer'
-          Align = alClient
-          Caption = #59596
-          Flat = True
-          Font.Charset = DEFAULT_CHARSET
-          Font.Color = clWindowText
-          Font.Height = -21
-          Font.Name = 'Segoe Fluent Icons'
-          Font.Style = []
-          Font.Quality = fqClearTypeNatural
-          ParentFont = False
-          ParentShowHint = False
-          ShowHint = True
-          OnClick = SpeedButton2Click
-          ExplicitLeft = 83
-          ExplicitTop = 3
-        end
-        object SpeedButton3: TSpeedButton
-          Left = 180
-          Top = 0
-          Width = 94
-          Height = 46
-          Hint = 'Shell Interaction'
-          Align = alClient
-          Caption = #59222
-          Flat = True
-          Font.Charset = DEFAULT_CHARSET
-          Font.Color = clWindowText
-          Font.Height = -21
-          Font.Name = 'Segoe Fluent Icons'
-          Font.Style = []
-          Font.Quality = fqClearTypeNatural
-          ParentFont = False
-          ParentShowHint = False
-          ShowHint = True
-          ExplicitLeft = 149
-          ExplicitTop = 6
-          ExplicitWidth = 82
-        end
-        object SpeedButton4: TSpeedButton
-          Left = 274
-          Top = 0
-          Width = 94
-          Height = 46
-          Hint = 'Settings'
-          Align = alClient
-          Caption = #59155
-          Flat = True
-          Font.Charset = DEFAULT_CHARSET
-          Font.Color = clWindowText
-          Font.Height = -21
-          Font.Name = 'Segoe Fluent Icons'
-          Font.Style = []
-          Font.Quality = fqClearTypeNatural
-          ParentFont = False
-          ParentShowHint = False
-          ShowHint = True
-          ExplicitLeft = 237
-          ExplicitTop = 6
-          ExplicitWidth = 81
-        end
-      end
       object ActivityIndicator1: TActivityIndicator
         Left = 20
         Top = 28
@@ -325,7 +191,7 @@ object frmWinDroid: TfrmWinDroid
       Left = 0
       Top = 0
       Width = 368
-      Height = 461
+      Height = 415
       Caption = 'crdInstaller'
       CardIndex = 1
       TabOrder = 1
@@ -334,7 +200,7 @@ object frmWinDroid: TfrmWinDroid
       Left = 0
       Top = 0
       Width = 368
-      Height = 461
+      Height = 415
       Caption = 'crdMisc'
       CardIndex = 2
       TabOrder = 2
@@ -343,10 +209,86 @@ object frmWinDroid: TfrmWinDroid
       Left = 0
       Top = 0
       Width = 368
-      Height = 461
+      Height = 415
       Caption = 'crdSettings'
       CardIndex = 3
       TabOrder = 3
+      object leADBPath: TLabeledEdit
+        Left = 12
+        Top = 22
+        Width = 285
+        Height = 21
+        EditLabel.Width = 207
+        EditLabel.Height = 13
+        EditLabel.Caption = 'ADB Path (e.g. C:\Platform-Tools\adb.exe)'
+        TabOrder = 0
+      end
+      object btnSearchADBPath: TButton
+        Left = 303
+        Top = 20
+        Width = 34
+        Height = 25
+        Caption = '...'
+        TabOrder = 1
+      end
+      object btnDownloadADB: TButton
+        Left = 263
+        Top = 49
+        Width = 106
+        Height = 25
+        Caption = 'Download ADB'
+        TabOrder = 2
+        OnClick = btnDownloadADBClick
+      end
+      object ProgressBar1: TProgressBar
+        Left = 12
+        Top = 56
+        Width = 245
+        Height = 10
+        TabOrder = 3
+      end
+      object LabeledEdit1: TLabeledEdit
+        Left = 12
+        Top = 102
+        Width = 285
+        Height = 21
+        EditLabel.Width = 81
+        EditLabel.Height = 13
+        EditLabel.Caption = 'Downloads Path:'
+        TabOrder = 4
+      end
+      object Button1: TButton
+        Left = 303
+        Top = 100
+        Width = 34
+        Height = 25
+        Caption = '...'
+        TabOrder = 5
+      end
+      object CheckBox1: TCheckBox
+        Left = 32
+        Top = 144
+        Width = 273
+        Height = 17
+        Caption = 'Start with Windows logon'
+        TabOrder = 6
+      end
+      object CheckBox2: TCheckBox
+        Left = 32
+        Top = 167
+        Width = 273
+        Height = 17
+        Caption = 'F11 hotkey to toggle Android app FullScreen'
+        TabOrder = 7
+      end
+      object CheckBox3: TCheckBox
+        Left = 32
+        Top = 190
+        Width = 273
+        Height = 17
+        Caption = 'Register as default .APK installer'
+        TabOrder = 8
+      end
     end
   end
   object pnlWSAState: TPanel
@@ -1005,6 +947,144 @@ object frmWinDroid: TfrmWinDroid
       WordWrap = True
     end
   end
+  object GridPanel1: TGridPanel
+    Left = 12
+    Top = 548
+    Width = 368
+    Height = 46
+    Align = alBottom
+    BevelOuter = bvNone
+    ColumnCollection = <
+      item
+        Value = 24.134362665037010000
+      end
+      item
+        Value = 24.738992247697230000
+      end
+      item
+        Value = 25.527879514108160000
+      end
+      item
+        Value = 25.598765573157600000
+      end>
+    ControlCollection = <
+      item
+        Column = 0
+        Control = SpeedButton1
+        Row = 0
+      end
+      item
+        Column = 1
+        Control = SpeedButton2
+        Row = 0
+      end
+      item
+        Column = 2
+        Control = SpeedButton3
+        Row = 0
+      end
+      item
+        Column = 3
+        Control = SpeedButton4
+        Row = 0
+      end>
+    RowCollection = <
+      item
+        Value = 100.000000000000000000
+      end>
+    TabOrder = 2
+    object SpeedButton1: TSpeedButton
+      Left = 0
+      Top = 0
+      Width = 89
+      Height = 46
+      Hint = 'Android Apps'
+      Align = alClient
+      Caption = #59165
+      Flat = True
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -21
+      Font.Name = 'Segoe Fluent Icons'
+      Font.Style = []
+      Font.Quality = fqClearTypeNatural
+      ParentFont = False
+      ParentShowHint = False
+      ShowHint = True
+      OnClick = SpeedButton1Click
+      ExplicitLeft = -6
+      ExplicitTop = 6
+      ExplicitWidth = 77
+    end
+    object SpeedButton2: TSpeedButton
+      Left = 89
+      Top = 0
+      Width = 91
+      Height = 46
+      Hint = 'Installer'
+      Align = alClient
+      Caption = #59596
+      Flat = True
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -21
+      Font.Name = 'Segoe Fluent Icons'
+      Font.Style = []
+      Font.Quality = fqClearTypeNatural
+      ParentFont = False
+      ParentShowHint = False
+      ShowHint = True
+      OnClick = SpeedButton2Click
+      ExplicitLeft = 83
+      ExplicitTop = 3
+    end
+    object SpeedButton3: TSpeedButton
+      Left = 180
+      Top = 0
+      Width = 94
+      Height = 46
+      Hint = 'Shell Interaction'
+      Align = alClient
+      Caption = #59222
+      Flat = True
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -21
+      Font.Name = 'Segoe Fluent Icons'
+      Font.Style = []
+      Font.Quality = fqClearTypeNatural
+      ParentFont = False
+      ParentShowHint = False
+      ShowHint = True
+      OnClick = SpeedButton3Click
+      ExplicitLeft = 149
+      ExplicitTop = 6
+      ExplicitWidth = 82
+    end
+    object SpeedButton4: TSpeedButton
+      Left = 274
+      Top = 0
+      Width = 94
+      Height = 46
+      Hint = 'Settings'
+      Align = alClient
+      Caption = #59155
+      Flat = True
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -21
+      Font.Name = 'Segoe Fluent Icons'
+      Font.Style = []
+      Font.Quality = fqClearTypeNatural
+      ParentFont = False
+      ParentShowHint = False
+      ShowHint = True
+      OnClick = SpeedButton4Click
+      ExplicitLeft = 237
+      ExplicitTop = 6
+      ExplicitWidth = 81
+    end
+  end
   object MadExceptionHandler1: TMadExceptionHandler
     Left = 544
     Top = 392
@@ -1037,12 +1117,6 @@ object frmWinDroid: TfrmWinDroid
     Left = 176
     Top = 168
   end
-  object SVGIconImageList1: TSVGIconImageList
-    SVGIconItems = <>
-    Scaled = True
-    Left = 56
-    Top = 280
-  end
   object ImageCollection1: TImageCollection
     Images = <>
     Left = 216
@@ -1064,17 +1138,51 @@ object frmWinDroid: TfrmWinDroid
     object OpenWSAInstallationFolder1: TMenuItem
       Caption = 'Open WSA Installation Folder'
     end
+    object WSAIncludedPackages1: TMenuItem
+      Caption = 'WSA Included Packages'
+      object Files1: TMenuItem
+        Caption = 'Files'
+        OnClick = Files1Click
+      end
+      object DebuggingOptions1: TMenuItem
+        Caption = 'Debugging Options'
+        OnClick = DebuggingOptions1Click
+      end
+      object Gallery1: TMenuItem
+        Caption = 'Gallery'
+        OnClick = Gallery1Click
+      end
+      object Contacts1: TMenuItem
+        Caption = 'Contacts'
+        OnClick = Contacts1Click
+      end
+    end
+    object SearchInstallAPKs1: TMenuItem
+      Caption = 'Search & Install APKs'
+      OnClick = SearchInstallAPKs1Click
+    end
     object N2: TMenuItem
       Caption = '-'
     end
     object RunAPK1: TMenuItem
       Caption = 'Launch APK'
+      OnClick = RunAPK1Click
     end
     object GetAPKInfo1: TMenuItem
       Caption = 'Get APK Info'
+      OnClick = GetAPKInfo1Click
+    end
+    object ManageAPK1: TMenuItem
+      Caption = 'Manage APK '
+      OnClick = ManageAPK1Click
+    end
+    object SearchUpdates1: TMenuItem
+      Caption = 'Search Updates'
+      OnClick = SearchUpdates1Click
     end
     object UninstallAPK1: TMenuItem
       Caption = 'Uninstall APK'
+      OnClick = UninstallAPK1Click
     end
     object N3: TMenuItem
       Caption = '-'
@@ -1087,6 +1195,8 @@ object frmWinDroid: TfrmWinDroid
     end
   end
   object ImageList1: TImageList
+    Height = 24
+    Width = 24
     Left = 168
     Top = 272
   end
