@@ -28,7 +28,7 @@ object frmWinDroid: TfrmWinDroid
     Width = 368
     Height = 415
     Align = alClient
-    ActiveCard = crdApps
+    ActiveCard = crdInstaller
     BevelOuter = bvNone
     TabOrder = 0
     object crdApps: TCard
@@ -119,10 +119,10 @@ object frmWinDroid: TfrmWinDroid
         end
         object ControlListButton1: TControlListButton
           AlignWithMargins = True
-          Left = 296
+          Left = -66
           Top = 20
           Width = 30
-          Height = 20
+          Height = -40
           Margins.Left = 2
           Margins.Top = 20
           Margins.Right = 2
@@ -135,10 +135,10 @@ object frmWinDroid: TfrmWinDroid
         end
         object ControlListButton2: TControlListButton
           AlignWithMargins = True
-          Left = 330
+          Left = -32
           Top = 20
           Width = 30
-          Height = 20
+          Height = -40
           Margins.Left = 2
           Margins.Top = 20
           Margins.Right = 2
@@ -195,6 +195,21 @@ object frmWinDroid: TfrmWinDroid
       Caption = 'crdInstaller'
       CardIndex = 1
       TabOrder = 1
+      object lbDropMsg: TLabel
+        Left = 64
+        Top = 256
+        Width = 3
+        Height = 13
+      end
+      object pnlDrop: TPanel
+        Left = 57
+        Top = 40
+        Width = 248
+        Height = 201
+        BevelOuter = bvLowered
+        Caption = 'Drop APK/XAPK here...'
+        TabOrder = 0
+      end
     end
     object crdMisc: TCard
       Left = 0
@@ -1199,5 +1214,14 @@ object frmWinDroid: TfrmWinDroid
     Width = 24
     Left = 168
     Top = 272
+  end
+  object DropFileTarget1: TDropFileTarget
+    DragTypes = [dtCopy, dtLink]
+    OnDrop = DropFileTarget1Drop
+    Target = pnlDrop
+    WinTarget = 0
+    OptimizedMove = True
+    Left = 84
+    Top = 277
   end
 end

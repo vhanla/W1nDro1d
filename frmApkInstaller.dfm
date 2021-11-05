@@ -18,6 +18,7 @@ object frmInstaller: TfrmInstaller
   StyleName = 'Windows'
   OnClick = FormClick
   OnCreate = FormCreate
+  OnDestroy = FormDestroy
   DesignSize = (
     636
     445)
@@ -340,9 +341,9 @@ object frmInstaller: TfrmInstaller
     OnClick = Button1Click
   end
   object SynEdit1: TSynEdit
-    Left = 122
-    Top = 104
-    Width = 392
+    Left = 86
+    Top = 122
+    Width = 512
     Height = 223
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
@@ -379,10 +380,23 @@ object frmInstaller: TfrmInstaller
     ParentFont = False
     TabOrder = 0
   end
-  object DosCommand1: TDosCommand
+  object btnLog: TButton
+    Left = 47
+    Top = 407
+    Width = 33
+    Height = 30
+    Caption = 'Log'
+    TabOrder = 8
+    OnClick = btnLogClick
+  end
+  object DCAapt: TDosCommand
     InputToOutput = False
     MaxTimeAfterBeginning = 0
     MaxTimeAfterLastOutput = 0
+    OnExecuteError = DCAaptExecuteError
+    OnNewLine = DCAaptNewLine
+    OnTerminated = DCAaptTerminated
+    OnTerminateProcess = DCAaptTerminateProcess
     Left = 568
     Top = 168
   end

@@ -14,7 +14,7 @@ uses
   // TrayIcon
   DosCommand, Net.HTTPClient, Winapi.IpHlpApi, Vcl.Imaging.pngimage,
   Vcl.BaseImageCollection, Vcl.ImageCollection, Data.DB, Datasnap.DBClient,
-  Vcl.ComCtrls;
+  Vcl.ComCtrls, DragDrop, DropTarget, DragDropFile;
 
 const  // hard coded paths, for now located in the same directory where this application runs
 { TODO : Add proper directories handling specially when this applications install in ProgramFiles or other restricted directories }
@@ -115,7 +115,7 @@ type
     crdInstaller: TCard;
     crdMisc: TCard;
     crdSettings: TCard;
-    ControlList1: TControlList;
+    ControlList1: Vcl.ControlList.TControlList;
     btnListApps: TButton;
     SearchBox1: TSearchBox;
     GridPanel1: TGridPanel;
@@ -169,6 +169,9 @@ type
     ManageAPK1: TMenuItem;
     SearchInstallAPKs1: TMenuItem;
     SearchUpdates1: TMenuItem;
+    pnlDrop: TPanel;
+    DropFileTarget1: TDropFileTarget;
+    lbDropMsg: TLabel;
     procedure Exit1Click(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure FormCreate(Sender: TObject);
@@ -197,6 +200,8 @@ type
     procedure RunAPK1Click(Sender: TObject);
     procedure SearchInstallAPKs1Click(Sender: TObject);
     procedure SearchUpdates1Click(Sender: TObject);
+    procedure DropFileTarget1Drop(Sender: TObject; ShiftState: TShiftState;
+      APoint: TPoint; var Effect: Integer);
   protected
     // TaskbarLocation
     function GetMainTaskbarPosition: Integer;
@@ -764,6 +769,39 @@ begin
   APKLaunch('developer-settings', '/deeplink wsa-client://');
 end;
 
+procedure TfrmWinDroid.DropFileTarget1Drop(Sender: TObject;
+  ShiftState: TShiftState; APoint: TPoint; var Effect: Integer);
+begin
+  lbDropMsg.Caption := '';
+  if DropFileTarget1.Files.Count > 1 then
+  begin
+    lbDropMsg.Caption := 'Currently, only one file at a time.'#13#10'Please drop only one file.';
+  end
+  else
+  begin
+    var ext := LowerCase(ExtractFileExt(DropFileTarget1.Files[0]));
+    if (ext = '.apk') or (ext = '.xapk') then
+    begin
+      frmInstaller.FApkFile := DropFileTarget1.Files[0];
+      frmInstaller.Show;
+      frmInstaller.FApkInfo.DisplayName := '';
+      frmInstaller.FApkInfo.DisplayVersion := '';
+      frmInstaller.FApkInfo.PackageName := '';
+      frmInstaller.FApkInfo.Icon := '';
+
+      frmInstaller.FApkPermissions.Clear;
+      frmInstaller.GetAPKInfoWithAndroidAssetPackagingTool;
+    end
+    else
+      lbDropMsg.Caption := 'Only .apk and .xapk file type accepted!';
+  end;
+
+  // If we do not reject a move, the source will assume that it is safe to
+  // delete the source data. (rare cases)
+  if (Effect = DROPEFFECT_MOVE) then
+    Effect := DROPEFFECT_NONE;
+end;
+
 procedure TfrmWinDroid.Exit1Click(Sender: TObject);
 begin
   Close;
@@ -873,7 +911,7 @@ begin
       lbPublisher.Caption := 'Publisher: ' + ApkInfo.Publisher;
       lbVersion.Caption := 'Version: ' + ApkInfo.DisplayVersion;  
       lbCapabilities.Caption := 'Details: ';
-      apkInstallerMemo.Lines.Clear;      
+      apkInstallerMemo.Lines.Clear;
       apkInstallerMemo.Lines.Add('Install Date: ' + ApkInfo.InstallDate);      
       apkInstallerMemo.Lines.Add('Estimated Size: ' + FormatFileSize(ApkInfo.EstimatedSize*1024));
       var logoPath := StringReplace(ApkInfo.DisplayIcon, '.ico', '.png', [rfReplaceAll]); 
@@ -1218,7 +1256,7 @@ end;
 
 procedure TfrmWinDroid.SpeedButton2Click(Sender: TObject);
 begin
-  frmApkInstaller.frmInstaller.Show;
+  crdContainer.ActiveCard := crdInstaller;
 end;
 
 procedure TfrmWinDroid.SpeedButton3Click(Sender: TObject);

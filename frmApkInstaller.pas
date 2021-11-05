@@ -10,6 +10,14 @@ uses
   SynEdit, ES.BaseControls, ES.Images;
 
 type
+
+  TApkDetails = record
+    DisplayName: string;
+    PackageName: string;
+    DisplayVersion: string;
+    Icon: string;
+  end;
+
   TPanel = class(Vcl.ExtCtrls.TPanel)
   private
     const
@@ -53,10 +61,11 @@ type
     lnkRepository: TLinkLabel;
     Button1: TButton;
     Shape1: TShape;
-    DosCommand1: TDosCommand;
+    DCAapt: TDosCommand;
     SynEdit1: TSynEdit;
     SynUNIXShellScriptSyn1: TSynUNIXShellScriptSyn;
     eApkImage: TEsImage;
+    btnLog: TButton;
     procedure pnlCaptionMouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
     procedure FormCreate(Sender: TObject);
@@ -67,10 +76,23 @@ type
       LinkType: TSysLinkType);
     procedure lnkRepositoryLinkClick(Sender: TObject; const Link: string;
       LinkType: TSysLinkType);
+    procedure DCAaptExecuteError(ASender: TObject; AE: Exception;
+      var AHandled: Boolean);
+    procedure DCAaptNewLine(ASender: TObject; const ANewLine: string;
+      AOutputType: TOutputType);
+    procedure DCAaptTerminateProcess(ASender: TObject;
+      var ACanTerminate: Boolean);
+    procedure btnLogClick(Sender: TObject);
+    procedure FormDestroy(Sender: TObject);
+    procedure DCAaptTerminated(Sender: TObject);
   private
     { Private declarations }
   public
     { Public declarations }
+    FApkFile: string;
+    FApkInfo: TApkDetails;
+    FApkPermissions: TStringList;
+    procedure GetAPKInfoWithAndroidAssetPackagingTool;
   end;
 
 var
@@ -79,13 +101,77 @@ var
 implementation
 
 uses
-  Winapi.ShellAPI, WSAManager, UWP.ColorManager;
+  Winapi.ShellAPI, WSAManager, UWP.ColorManager, RegularExpressions;
 
 {$R *.dfm}
+
+procedure TfrmInstaller.btnLogClick(Sender: TObject);
+begin
+  SynEdit1.Visible := not SynEdit1.Visible;
+end;
 
 procedure TfrmInstaller.Button1Click(Sender: TObject);
 begin
   pnlAbout.Visible := not pnlAbout.Visible;
+end;
+
+procedure TfrmInstaller.DCAaptExecuteError(ASender: TObject; AE: Exception;
+  var AHandled: Boolean);
+begin
+  if AHandled then
+    ShowMessage(AE.ToString);
+
+end;
+
+procedure TfrmInstaller.DCAaptNewLine(ASender: TObject;
+  const ANewLine: string; AOutputType: TOutputType);
+begin
+  AOutputType := otEntireLine;
+
+  if SynEdit1.Lines.Count > 1000 then
+    SynEdit1.Lines.Clear;
+
+  SynEdit1.Lines.Add(ANewLine);
+  SynEdit1.GotoLineAndCenter(SynEdit1.Lines.Count);
+
+  if FApkInfo.PackageName = '' then
+    if Pos('package: ', ANewLine) = 1 then
+    begin
+      FApkInfo.PackageName := TRegEx.Match(ANewLine, '(?<=name='')[^'']*').Value;
+      FApkInfo.DisplayVersion := TRegEx.Match(ANewLine, '(?<=versionName='')[^'']*').Value;
+    end;
+
+  if FApkInfo.DisplayName = '' then
+    if Pos('launchable-activity: ', ANewLine) = 1 then
+    begin
+      FApkInfo.DisplayName := TRegEx.Match(ANewLine, '(?<=label='')[^'']*').Value;
+//      FApkInfo.Icon := TRegEx.Match(ANewLine, '(?<=icon='')[^'']*').Value;
+    end
+    else if Pos('application-label', ANewLine) = 1 then
+      FApkInfo.DisplayName := TRegEx.Match(ANewLine, '(?<=:'')[^'']*').Value;
+
+  if Pos('uses-permission: ', ANewLine) = 1 then
+    FApkPermissions.Add(TRegEx.Match(ANewLine, '(?<=name='')[^'']*').Value);
+
+  if FApkInfo.Icon = '' then
+    if Pos('application-icon-', ANewLine) = 1 then
+      FApkInfo.Icon := TRegEx.Match(ANewLine, '(?<=:'')[^'']*').Value;
+
+end;
+
+procedure TfrmInstaller.DCAaptTerminated(Sender: TObject);
+begin
+  lbAPKDisplayName.Caption := FApkInfo.DisplayName;
+  lbCapabilities.Caption := 'Capabilities';
+  lbVersion.Caption := 'Version: ' + FApkInfo.DisplayVersion;
+  lbPublisher.Caption := 'Icon: ' + FApkInfo.Icon;
+  apkInstallerMemo.Lines := FApkPermissions;
+end;
+
+procedure TfrmInstaller.DCAaptTerminateProcess(ASender: TObject;
+  var ACanTerminate: Boolean);
+begin
+  ACanTerminate := True;
 end;
 
 procedure TfrmInstaller.FormClick(Sender: TObject);
@@ -95,9 +181,32 @@ end;
 
 procedure TfrmInstaller.FormCreate(Sender: TObject);
 begin
+  FApkPermissions := TStringList.Create;
 //  pnlCaption.Height := GetSystemMetrics(SM_CYCAPTION) + GetSystemMetrics(SM_CXBORDER);
 //  pnlAbout.Rounded := True;
   ColorizationManager.ColorizationType :=  TUWPColorizationType.ctLight;
+end;
+
+procedure TfrmInstaller.FormDestroy(Sender: TObject);
+begin
+  DCAapt.Stop;
+  FApkPermissions.Free;
+end;
+
+procedure TfrmInstaller.GetAPKInfoWithAndroidAssetPackagingTool;
+var
+  cmdline: string;
+begin
+  if FileExists(ExtractFilePath(ParamStr(0))+ 'aapt.exe') then
+  begin
+    cmdline := 'aapt.exe d badging "' + FApkFile + '"';
+    if DCAapt.IsRunning then
+      DCAapt.Stop;
+
+    DCAapt.InputToOutput := False;
+    DCAapt.CommandLine := cmdline;
+    DCAapt.Execute;
+  end;
 end;
 
 procedure TfrmInstaller.lnkRepositoryLinkClick(Sender: TObject;
