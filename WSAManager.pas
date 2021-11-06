@@ -202,6 +202,7 @@ type
     procedure SearchUpdates1Click(Sender: TObject);
     procedure DropFileTarget1Drop(Sender: TObject; ShiftState: TShiftState;
       APoint: TPoint; var Effect: Integer);
+    procedure FormPaint(Sender: TObject);
   protected
     // TaskbarLocation
     function GetMainTaskbarPosition: Integer;
@@ -217,8 +218,13 @@ type
     procedure GetApkInfo(var Apk: TAPKInfo; const PackageName: string);
 
     procedure CreateParams(var Params: TCreateParams); override;
+
+    procedure CreateBlurBackground;
+    procedure DestroyBlurBackground;
+    procedure UpdateBlurBackground;
   private
     { Private declarations }
+    FBlurBackground: HWND;
     WSA: TWSA;
     ControlListIndex: Integer;
     ControlListFiltered: Boolean;
@@ -245,12 +251,12 @@ var
 implementation
 
 uses
-  Vcl.Themes, FVCLThemeSelector, CBVCLStylePreviewForm, frmApkInstaller,
+  Vcl.Themes, frmApkInstaller,
   Winapi.PsAPI, Winapi.DwmApi, Winapi.MultiMon,
   Winapi.ShellAPI, System.Win.Registry, Winapi.msxml, System.IOUtils,
   Winapi.KnownFolders, Winapi.ShlObj, Winapi.ActiveX, System.Win.ComObj,
   Winapi.PropKey, Winapi.oleacc, System.Threading, frmBrowser,
-  UWP.ColorManager, helperFuncs;
+  UWP.ColorManager, helperFuncs, Winapi.GDIPAPI;
 
 const
   WM_TOGGLEFULLSCREEN = WM_USER + 9;
@@ -757,6 +763,29 @@ begin
   end;
 end;
 
+procedure TfrmWinDroid.CreateBlurBackground;
+var
+  d:Integer;
+begin
+  if FBlurBackground = 0 then
+  try
+    FBlurBackground := CreateWindowEx(WS_EX_LAYERED + WS_EX_TOOLWINDOW, 'WSABLUR',
+//      'BlurBackground', WS_POPUP, -100, -100, 10, 10, 0, 0, HInstance, nil);
+      'BlurBackground', WS_POPUP, Left, Top, Width, Height, 0, 0, HInstance, nil);
+    //exclude from peek
+    DwmSetWindowAttribute(FBlurBackground, DWMWA_EXCLUDED_FROM_PEEK, @d, SizeOf(d));
+    d := DWMFLIP3D_EXCLUDEBELOW;
+    DwmSetWindowAttribute(FBlurBackground, DWMWA_FLIP3D_POLICY, @d, SizeOf(d));
+
+    SetWindowLongPtr(Handle, GWL_HWNDPARENT, FBlurBackground); // attach main window
+//    SetWindowPos(FBlurBackground, Handle, 0, 0, 0, 0, SWP_NOSIZE or SWP_NOMOVE or SWP_NOACTIVATE or SWP_NOOWNERZORDER or SWP_NOSENDCHANGING or SWP_ASYNCWINDOWPOS);
+    SetWindowPos(FBlurBackground, Handle, Left, Top, Width, Height, SWP_NOACTIVATE or SWP_NOOWNERZORDER or SWP_NOSENDCHANGING or SWP_ASYNCWINDOWPOS);
+  except
+    on E: Exception do raise Exception.Create('Error Message' + sLineBreak + E.Message);
+  end;
+
+end;
+
 procedure TfrmWinDroid.CreateParams(var Params: TCreateParams);
 begin
   inherited;
@@ -767,6 +796,18 @@ end;
 procedure TfrmWinDroid.DebuggingOptions1Click(Sender: TObject);
 begin
   APKLaunch('developer-settings', '/deeplink wsa-client://');
+end;
+
+procedure TfrmWinDroid.DestroyBlurBackground;
+begin
+  try
+    SetWindowLongPtr(Handle, GWL_HWNDPARENT, 0); // detach main window
+    if IsWindow(FBlurBackground) then
+      DestroyWindow(FBlurBackground);
+    FBlurBackground := 0;
+  except
+    on E: Exception do raise Exception.Create('Error Message' + sLineBreak + e.Message);
+  end;
 end;
 
 procedure TfrmWinDroid.DropFileTarget1Drop(Sender: TObject;
@@ -845,10 +886,13 @@ begin
 //  RunHook(Handle);
   if not StartHook then
     raise Exception.Create('Couldn''t set global hook to intercept F11');
+
+//  CreateBlurBackground;
 end;
 
 procedure TfrmWinDroid.FormDestroy(Sender: TObject);
 begin
+//  DestroyBlurBackground;
   StopHook;
 //  KillHook;
   UnhookWinEvent(Hook);
@@ -859,6 +903,11 @@ begin
   AppListSearchFilter.Free;
   AppsClasses.Free;
   AppsClassesSearchFilter.Free;
+end;
+
+procedure TfrmWinDroid.FormPaint(Sender: TObject);
+begin
+//  UpdateBlurBackground;
 end;
 
 procedure TfrmWinDroid.FormShow(Sender: TObject);
@@ -1291,6 +1340,20 @@ begin
       APKLaunch(LPackageName, '/uninstall ');
       btnListAppsClick(Sender);
     end;
+  end;
+end;
+
+procedure TfrmWinDroid.UpdateBlurBackground;
+begin
+  try
+    if IsWindow(FBlurBackground) and IsWindowVisible(FBlurBackground) then
+    begin
+//      SetWindowPos(FBlurBackground, 0, 0, 0, 0, 0, SWP_NOZORDER or SWP_SHOWWINDOW or SWP_NOSIZE or SWP_NOMOVE or SWP_NOACTIVATE or SWP_NOOWNERZORDER or SWP_NOSENDCHANGING or SWP_ASYNCWINDOWPOS);
+//      EnableBlurBehindWindow(FBlurBackground);
+    end;
+
+  finally
+
   end;
 end;
 
