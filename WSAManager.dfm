@@ -1,6 +1,8 @@
 object frmWinDroid: TfrmWinDroid
   Left = 0
   Top = 0
+  AlphaBlend = True
+  AlphaBlendValue = 240
   Caption = 'WinDroid'
   ClientHeight = 606
   ClientWidth = 392
@@ -19,6 +21,7 @@ object frmWinDroid: TfrmWinDroid
   StyleElements = [seFont, seClient]
   OnCreate = FormCreate
   OnDestroy = FormDestroy
+  OnPaint = FormPaint
   OnShow = FormShow
   PixelsPerInch = 96
   TextHeight = 13
@@ -105,8 +108,8 @@ object frmWinDroid: TfrmWinDroid
         object lbListAPKTitle: TLabel
           Left = 65
           Top = 12
-          Width = 25
-          Height = 17
+          Width = 24
+          Height = 16
           Caption = 'Title'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
@@ -864,8 +867,8 @@ object frmWinDroid: TfrmWinDroid
     object lbWSAInfo: TLabel
       Left = 66
       Top = 8
-      Width = 287
-      Height = 17
+      Width = 270
+      Height = 16
       Caption = 'Windows Subsystem for Android '#8482' (not found)'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
@@ -877,8 +880,8 @@ object frmWinDroid: TfrmWinDroid
     object lbWSAVersion: TLabel
       Left = 66
       Top = 23
-      Width = 126
-      Height = 16
+      Width = 128
+      Height = 15
       Caption = 'WSAVersion (not found)'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
@@ -892,7 +895,7 @@ object frmWinDroid: TfrmWinDroid
       Left = 66
       Top = 73
       Width = 136
-      Height = 15
+      Height = 14
       Caption = 'AppModelUserId (not found)'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
@@ -904,8 +907,8 @@ object frmWinDroid: TfrmWinDroid
     object lbWSAMinWinVer: TLabel
       Left = 66
       Top = 39
-      Width = 197
-      Height = 16
+      Width = 198
+      Height = 15
       Caption = 'Minimum Windows Build (not found)'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
@@ -918,8 +921,8 @@ object frmWinDroid: TfrmWinDroid
     object lbWSAPublisher: TLabel
       Left = 66
       Top = 56
-      Width = 113
-      Height = 16
+      Width = 115
+      Height = 15
       Caption = 'Publisher (not found)'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
@@ -932,8 +935,8 @@ object frmWinDroid: TfrmWinDroid
     object lbWSAForeground: TLabel
       Left = 66
       Top = 99
-      Width = 126
-      Height = 16
+      Width = 124
+      Height = 15
       Caption = 'WSA App in foreground'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
