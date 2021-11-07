@@ -1152,9 +1152,11 @@ object frmWinDroid: TfrmWinDroid
     Top = 64
     object LaunchWSASettings1: TMenuItem
       Caption = 'Launch WSA Settings'
+      OnClick = LaunchWSASettings1Click
     end
     object OpenWSAInstallationFolder1: TMenuItem
       Caption = 'Open WSA Installation Folder'
+      OnClick = OpenWSAInstallationFolder1Click
     end
     object WSAIncludedPackages1: TMenuItem
       Caption = 'WSA Included Packages'
@@ -1210,6 +1212,7 @@ object frmWinDroid: TfrmWinDroid
     end
     object Exit2: TMenuItem
       Caption = 'E&xit'
+      OnClick = Exit2Click
     end
   end
   object ImageList1: TImageList

@@ -203,6 +203,9 @@ type
     procedure DropFileTarget1Drop(Sender: TObject; ShiftState: TShiftState;
       APoint: TPoint; var Effect: Integer);
     procedure FormPaint(Sender: TObject);
+    procedure LaunchWSASettings1Click(Sender: TObject);
+    procedure OpenWSAInstallationFolder1Click(Sender: TObject);
+    procedure Exit2Click(Sender: TObject);
   protected
     // TaskbarLocation
     function GetMainTaskbarPosition: Integer;
@@ -848,6 +851,11 @@ begin
   Close;
 end;
 
+procedure TfrmWinDroid.Exit2Click(Sender: TObject);
+begin
+  Close;
+end;
+
 procedure TfrmWinDroid.Files1Click(Sender: TObject);
 begin
   APKLaunch('com.android.documentsui');
@@ -1210,6 +1218,11 @@ begin
 
 end;
 
+procedure TfrmWinDroid.LaunchWSASettings1Click(Sender: TObject);
+begin
+  ShellExecute(0, 'OPEN', 'explorer.exe', PChar('shell:::{4234d49b-0245-4df3-b780-3893943456e1}\'+WSA.AppUserModelID), nil, SW_SHOWNORMAL);
+end;
+
 procedure TfrmWinDroid.ManageAPK1Click(Sender: TObject);
 begin
   if (ControlListIndex >= 0) and (ControlList1.ItemCount > 0)
@@ -1223,6 +1236,11 @@ begin
     end;
 
   end;
+end;
+
+procedure TfrmWinDroid.OpenWSAInstallationFolder1Click(Sender: TObject);
+begin
+  ShellExecute(0, 'OPEN', 'explorer.exe', PChar(GetWSAInstallationPath(WSA.AppUserModelID)), nil, SW_SHOWNORMAL);
 end;
 
 function TfrmWinDroid.ReplaceAmazonAppstore: Boolean;
