@@ -23,7 +23,7 @@ object frmInstaller: TfrmInstaller
     636
     445)
   PixelsPerInch = 96
-  TextHeight = 15
+  TextHeight = 14
   object lbAPKDisplayName: TLabel
     Left = 24
     Top = 44
@@ -43,8 +43,8 @@ object frmInstaller: TfrmInstaller
   object lbPublisher: TLabel
     Left = 24
     Top = 144
-    Width = 56
-    Height = 17
+    Width = 58
+    Height = 16
     Caption = 'Publisher:'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
@@ -57,8 +57,8 @@ object frmInstaller: TfrmInstaller
   object lbVersion: TLabel
     Left = 24
     Top = 166
-    Width = 46
-    Height = 17
+    Width = 47
+    Height = 16
     Caption = 'Version:'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
@@ -71,8 +71,8 @@ object frmInstaller: TfrmInstaller
   object lbCertificate: TLabel
     Left = 24
     Top = 122
-    Width = 40
-    Height = 17
+    Width = 41
+    Height = 16
     Caption = 'Signer:'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clHighlight
@@ -81,12 +81,13 @@ object frmInstaller: TfrmInstaller
     Font.Style = []
     Font.Quality = fqClearTypeNatural
     ParentFont = False
+    OnClick = lbCertificateClick
   end
   object lbCapabilities: TLabel
     Left = 24
     Top = 204
     Width = 67
-    Height = 17
+    Height = 16
     Caption = 'Capabilities'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
@@ -155,8 +156,8 @@ object frmInstaller: TfrmInstaller
     object lbAbout: TLabel
       Left = 16
       Top = 16
-      Width = 43
-      Height = 21
+      Width = 41
+      Height = 18
       Caption = 'About'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
@@ -169,8 +170,8 @@ object frmInstaller: TfrmInstaller
     object lbInsVersion: TLabel
       Left = 16
       Top = 39
-      Width = 130
-      Height = 17
+      Width = 143
+      Height = 16
       Caption = 'APK Installer 1.0.211028'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
@@ -183,8 +184,8 @@ object frmInstaller: TfrmInstaller
     object Label1: TLabel
       Left = 16
       Top = 62
-      Width = 217
-      Height = 17
+      Width = 214
+      Height = 16
       Caption = #169' 2021 Codigobit. All rights reserved.'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
@@ -211,8 +212,8 @@ object frmInstaller: TfrmInstaller
     object lnkWebSite: TLinkLabel
       Left = 20
       Top = 85
-      Width = 64
-      Height = 21
+      Width = 63
+      Height = 20
       Cursor = crHandPoint
       Caption = '<a href="https://codigobit.net">Codigobit</a>'
       Font.Charset = DEFAULT_CHARSET
@@ -228,8 +229,8 @@ object frmInstaller: TfrmInstaller
     object lnkRepository: TLinkLabel
       Left = 20
       Top = 112
-      Width = 113
-      Height = 21
+      Width = 114
+      Height = 20
       Cursor = crHandPoint
       Caption = 
         '<a href="https://github.com/vhanla/W1nDro1d">GitHub Repository</' +
@@ -397,8 +398,8 @@ object frmInstaller: TfrmInstaller
     OnNewLine = DCAaptNewLine
     OnTerminated = DCAaptTerminated
     OnTerminateProcess = DCAaptTerminateProcess
-    Left = 568
-    Top = 168
+    Left = 440
+    Top = 56
   end
   object SynUNIXShellScriptSyn1: TSynUNIXShellScriptSyn
     Options.AutoDetectEnabled = False
@@ -406,5 +407,12 @@ object frmInstaller: TfrmInstaller
     Options.Visible = False
     Left = 272
     Top = 152
+  end
+  object DCPKCS7: TDosCommand
+    InputToOutput = False
+    MaxTimeAfterBeginning = 0
+    MaxTimeAfterLastOutput = 0
+    Left = 368
+    Top = 48
   end
 end

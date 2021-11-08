@@ -66,6 +66,7 @@ type
     SynUNIXShellScriptSyn1: TSynUNIXShellScriptSyn;
     eApkImage: TEsImage;
     btnLog: TButton;
+    DCPKCS7: TDosCommand;
     procedure pnlCaptionMouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
     procedure FormCreate(Sender: TObject);
@@ -85,6 +86,7 @@ type
     procedure btnLogClick(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure DCAaptTerminated(Sender: TObject);
+    procedure lbCertificateClick(Sender: TObject);
   private
     { Private declarations }
   public
@@ -207,6 +209,11 @@ begin
     DCAapt.CommandLine := cmdline;
     DCAapt.Execute;
   end;
+end;
+
+procedure TfrmInstaller.lbCertificateClick(Sender: TObject);
+begin
+  DCPKCS7.CommandLine := 'openssl pkcs7 -in '+GetRSAFile()+' -inform DER -print_certs | openssl x509 -text -noout'
 end;
 
 procedure TfrmInstaller.lnkRepositoryLinkClick(Sender: TObject;
