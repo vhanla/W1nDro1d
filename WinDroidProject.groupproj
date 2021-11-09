@@ -12,6 +12,9 @@
         <Projects Include="WinDroid.dproj">
             <Dependencies/>
         </Projects>
+        <Projects Include="APKIcon.dproj">
+            <Dependencies/>
+        </Projects>
     </ItemGroup>
     <ProjectExtensions>
         <Borland.Personality>Default.Personality.12</Borland.Personality>
@@ -47,14 +50,23 @@
     <Target Name="WinDroid:Make">
         <MSBuild Projects="WinDroid.dproj" Targets="Make"/>
     </Target>
+    <Target Name="APKIcon">
+        <MSBuild Projects="APKIcon.dproj"/>
+    </Target>
+    <Target Name="APKIcon:Clean">
+        <MSBuild Projects="APKIcon.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="APKIcon:Make">
+        <MSBuild Projects="APKIcon.dproj" Targets="Make"/>
+    </Target>
     <Target Name="Build">
-        <CallTarget Targets="W1nDro1d;F11Hook;WinDroid"/>
+        <CallTarget Targets="W1nDro1d;F11Hook;WinDroid;APKIcon"/>
     </Target>
     <Target Name="Clean">
-        <CallTarget Targets="W1nDro1d:Clean;F11Hook:Clean;WinDroid:Clean"/>
+        <CallTarget Targets="W1nDro1d:Clean;F11Hook:Clean;WinDroid:Clean;APKIcon:Clean"/>
     </Target>
     <Target Name="Make">
-        <CallTarget Targets="W1nDro1d:Make;F11Hook:Make;WinDroid:Make"/>
+        <CallTarget Targets="W1nDro1d:Make;F11Hook:Make;WinDroid:Make;APKIcon:Make"/>
     </Target>
     <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
 </Project>
