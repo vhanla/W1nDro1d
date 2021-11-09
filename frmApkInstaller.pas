@@ -7,7 +7,8 @@ uses
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls,
   Vcl.TitleBarCtrls, UWP.Form, UWP.QuickButton, UWP.Caption, UWP.Button,
   Vcl.WinXCtrls, DosCommand, SynEditHighlighter, SynHighlighterUNIXShellScript,
-  SynEdit, ES.BaseControls, ES.Images;
+  SynEdit, ES.BaseControls, ES.Images,
+  JclCompression, JclStrings;
 
 type
 
@@ -89,6 +90,7 @@ type
     procedure lbCertificateClick(Sender: TObject);
   private
     { Private declarations }
+    FArchive: TJclDecompressArchive;
   public
     { Public declarations }
     FApkFile: string;
