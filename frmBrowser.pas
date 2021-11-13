@@ -7,7 +7,7 @@ uses
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, WebView2, Winapi.ActiveX, Vcl.Edge,
   Vcl.OleCtrls, SHDocVw, SHDocVw_EWB, EwbCore, EmbeddedWB, IEDownload,
   IEMultiDownload, UrlMon, Vcl.ExtCtrls, UWP.Downloader, Vcl.WinXPanels,
-  Vcl.ComCtrls, Winapi.Mshtmhst;
+  Vcl.ComCtrls, Winapi.Mshtmhst, Vcl.StdCtrls, Vcl.FileCtrl;
 
 const
   DOCHOSTUIFLAG_DPI_AWARE = $40000000;
@@ -51,10 +51,14 @@ type
     PageControl1: TPageControl;
     TabSheet1: TTabSheet;
     TabSheet2: TTabSheet;
+    FileListBox1: TFileListBox;
     procedure FormCreate(Sender: TObject);
     procedure UWPDownloader1Downloaded(Sender: TObject; DownloadCode: Integer);
     procedure WebBrowser1NewWindow2(ASender: TObject; var ppDisp: IDispatch;
       var Cancel: WordBool);
+    procedure ListView1DblClick(Sender: TObject);
+    procedure VirtualExplorerListview1DblClick(Sender: TObject);
+    procedure FileListBox1DblClick(Sender: TObject);
   private
     { Private declarations }
     procedure BeforeFileDownload(Sender: TObject; const FileSource: WideString;
@@ -69,7 +73,8 @@ var
 implementation
 
 uses
-  System.Net.HttpClient, {IdHTTP,} helperFuncs;
+  System.Net.HttpClient, {IdHTTP,} helperFuncs,
+  frmApkInstaller;
 
 {$R *.dfm}
 
@@ -139,16 +144,52 @@ begin
 
 end;
 
+procedure TfrmWeb.FileListBox1DblClick(Sender: TObject);
+begin
+  frmInstaller.FApkFile := FileListBox1.Items[FileListBox1.ItemIndex];
+  frmInstaller.Show;
+  frmInstaller.FApkInfo.DisplayName := '';
+  frmInstaller.FApkInfo.DisplayVersion := '';
+  frmInstaller.FApkInfo.PackageName := '';
+  frmInstaller.FApkInfo.Icon := '';
+
+  frmInstaller.FApkPermissions.Clear;
+  frmInstaller.GetAPKInfoWithAndroidAssetPackagingTool;
+end;
+
 procedure TfrmWeb.FormCreate(Sender: TObject);
 begin
   WebBrowser1.Silent := True;
   WebBrowser1.OnBeforeFileDownload := BeforeFileDownload;
+
+  if DirectoryExists(ExtractFilePath(ParamStr(0))+'Downloads') then
+  begin
+    FileListBox1.Directory := ExtractFilePath(ParamStr(0))+'Downloads';
+  end;
+end;
+
+procedure TfrmWeb.ListView1DblClick(Sender: TObject);
+begin
+//  frmInstaller.FApkFile := ListView1.Items[ListView1.ItemIndex].;
+  frmInstaller.Show;
+  frmInstaller.FApkInfo.DisplayName := '';
+  frmInstaller.FApkInfo.DisplayVersion := '';
+  frmInstaller.FApkInfo.PackageName := '';
+  frmInstaller.FApkInfo.Icon := '';
+
+  frmInstaller.FApkPermissions.Clear;
+  frmInstaller.GetAPKInfoWithAndroidAssetPackagingTool;
 end;
 
 procedure TfrmWeb.UWPDownloader1Downloaded(Sender: TObject;
   DownloadCode: Integer);
 begin
   ShowMessage('File Downloaded!');
+end;
+
+procedure TfrmWeb.VirtualExplorerListview1DblClick(Sender: TObject);
+begin
+
 end;
 
 // prevent opening links in MSEdge

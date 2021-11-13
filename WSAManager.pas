@@ -14,12 +14,12 @@ uses
   // TrayIcon
   DosCommand, Net.HTTPClient, Winapi.IpHlpApi, Vcl.Imaging.pngimage,
   Vcl.BaseImageCollection, Vcl.ImageCollection, Data.DB, Datasnap.DBClient,
-  Vcl.ComCtrls, DragDrop, DropTarget, DragDropFile;
+  Vcl.ComCtrls, DragDrop, DropTarget, DragDropFile, System.Notification,
+  adb;
 
 const  // hard coded paths, for now located in the same directory where this application runs
-{ TODO : Add proper directories handling specially when this applications install in ProgramFiles or other restricted directories }
-  ADB_PATH = 'adb';
-  DOWNLOADS_PATH = 'downloads';
+  INIFILE = 'settings.ini';
+
   // Up to date download link for Windows is located here
   ADB_URL = 'https://dl.google.com/android/repository/platform-tools-latest-windows.zip';
 
@@ -156,11 +156,11 @@ type
     btnSearchADBPath: TButton;
     btnDownloadADB: TButton;
     ProgressBar1: TProgressBar;
-    LabeledEdit1: TLabeledEdit;
+    leDownloadsPath: TLabeledEdit;
     Button1: TButton;
-    CheckBox1: TCheckBox;
-    CheckBox2: TCheckBox;
-    CheckBox3: TCheckBox;
+    cbAutostart: TCheckBox;
+    cbFullScreenF11: TCheckBox;
+    cbAPKShellRegister: TCheckBox;
     WSAIncludedPackages1: TMenuItem;
     Files1: TMenuItem;
     DebuggingOptions1: TMenuItem;
@@ -172,6 +172,31 @@ type
     pnlDrop: TPanel;
     DropFileTarget1: TDropFileTarget;
     lbDropMsg: TLabel;
+    PageControl1: TPageControl;
+    tsADB: TTabSheet;
+    tsMisc: TTabSheet;
+    GroupBox1: TGroupBox;
+    gbADBinfo: TGroupBox;
+    lblADBVersion: TLabel;
+    lblPublisher: TLabel;
+    lblADBStatus: TLabel;
+    lblADBPort: TLabel;
+    HotKey1: THotKey;
+    cbHKShow: TCheckBox;
+    gbWSAUtils: TGroupBox;
+    gbAppSettings: TGroupBox;
+    NotificationCenter1: TNotificationCenter;
+    tsNotifications: TTabSheet;
+    cbNotifyADB: TCheckBox;
+    cbNotifyAPKInstalled: TCheckBox;
+    cbNotifyWSAStatus: TCheckBox;
+    lbNotify: TLabel;
+    ExploreAPK1: TMenuItem;
+    N4: TMenuItem;
+    N5: TMenuItem;
+    btnAdbStatus: TButton;
+    OpenDialog1: TOpenDialog;
+    edADBPort: TEdit;
     procedure Exit1Click(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure FormCreate(Sender: TObject);
@@ -206,6 +231,11 @@ type
     procedure LaunchWSASettings1Click(Sender: TObject);
     procedure OpenWSAInstallationFolder1Click(Sender: TObject);
     procedure Exit2Click(Sender: TObject);
+    procedure ExploreAPK1Click(Sender: TObject);
+    procedure btnAdbStatusClick(Sender: TObject);
+    procedure btnSearchADBPathClick(Sender: TObject);
+    procedure pnlWSAStateMouseDown(Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: Integer);
   protected
     // TaskbarLocation
     function GetMainTaskbarPosition: Integer;
@@ -225,6 +255,9 @@ type
     procedure CreateBlurBackground;
     procedure DestroyBlurBackground;
     procedure UpdateBlurBackground;
+
+    procedure SaveINI;
+    procedure LoadINI;
   private
     { Private declarations }
     FBlurBackground: HWND;
@@ -236,6 +269,7 @@ type
   public
     { Public declarations }
     ApkInfo: TAPKInfo;
+    ADB: TADB;
     procedure APKLaunch(const PackageName: string; specialUri: string = '/launch wsa://');
   end;
 
@@ -254,12 +288,12 @@ var
 implementation
 
 uses
-  Vcl.Themes, frmApkInstaller,
+  Vcl.Themes, frmApkInstaller, frmApkViewer,
   Winapi.PsAPI, Winapi.DwmApi, Winapi.MultiMon,
   Winapi.ShellAPI, System.Win.Registry, Winapi.msxml, System.IOUtils,
   Winapi.KnownFolders, Winapi.ShlObj, Winapi.ActiveX, System.Win.ComObj,
   Winapi.PropKey, Winapi.oleacc, System.Threading, frmBrowser,
-  UWP.ColorManager, helperFuncs, Winapi.GDIPAPI;
+  UWP.ColorManager, helperFuncs, Winapi.GDIPAPI, System.IniFiles;
 
 const
   WM_TOGGLEFULLSCREEN = WM_USER + 9;
@@ -441,6 +475,26 @@ end;
 procedure TfrmWinDroid.APKLaunch(const PackageName: string; specialUri: string = '/launch wsa://');
 begin
   ShellExecute(0, 'OPEN', PChar(WSA.InstallPath + WSA.WsaClient), PChar(specialUri+PackageName), nil, SW_SHOWNORMAL);
+end;
+
+procedure TfrmWinDroid.btnAdbStatusClick(Sender: TObject);
+begin
+  if not FileExists(ADB.Path) then
+  begin
+    gbADBinfo.Caption := 'ADB not found!';
+  end
+  else
+  begin
+    gbADBinfo.Caption := 'ADB Found :)';
+    lblADBVersion.Caption := 'Version:  ' + FileVersionGet(ADB.Path);
+    lblPublisher.Caption := 'Publisher: ' + GetExeCertCompanyName(ADB.Path);
+    if ADB.ConnectSocket(StrToInt(edADBPort.Text)) then
+    begin
+      lblADBStatus.Caption := 'ADB Server Status: Connected';
+    end
+    else
+      lblADBStatus.Caption := 'ADB Server Status: Not connected!';
+  end;
 end;
 
 procedure TfrmWinDroid.btnDownloadADBClick(Sender: TObject);
@@ -677,6 +731,19 @@ begin
   );
 end;
 
+procedure TfrmWinDroid.btnSearchADBPathClick(Sender: TObject);
+begin
+  OpenDialog1.Filter := 'adb executable|adb.exe|All files|*.*';
+  if OpenDialog1.Execute then
+  begin
+    leADBPath.Text := OpenDialog1.FileName;
+    ADB.Path := OpenDialog1.FileName;
+
+    SaveINI;
+  end;
+
+end;
+
 procedure TfrmWinDroid.CheckWsaClientStatus;
 var
   state: Boolean;
@@ -856,6 +923,11 @@ begin
   Close;
 end;
 
+procedure TfrmWinDroid.ExploreAPK1Click(Sender: TObject);
+begin
+  frmApkViewerWnd.Show;
+end;
+
 procedure TfrmWinDroid.Files1Click(Sender: TObject);
 begin
   APKLaunch('com.android.documentsui');
@@ -896,10 +968,18 @@ begin
     raise Exception.Create('Couldn''t set global hook to intercept F11');
 
 //  CreateBlurBackground;
+
+  ADB := TADB.Create;
+  ADB.Path := leADBPath.Text;
+  if not FileExists(ADB.Path) then
+    gbADBinfo.Caption := 'ADB not found!';
+
+  LoadINI;
 end;
 
 procedure TfrmWinDroid.FormDestroy(Sender: TObject);
 begin
+  ADB.Free;
 //  DestroyBlurBackground;
   StopHook;
 //  KillHook;
@@ -969,7 +1049,7 @@ begin
       lbVersion.Caption := 'Version: ' + ApkInfo.DisplayVersion;  
       lbCapabilities.Caption := 'Details: ';
       apkInstallerMemo.Lines.Clear;
-      apkInstallerMemo.Lines.Add('Install Date: ' + ApkInfo.InstallDate);      
+      apkInstallerMemo.Lines.Add('Install Date: ' + ApkInfo.InstallDate);
       apkInstallerMemo.Lines.Add('Estimated Size: ' + FormatFileSize(ApkInfo.EstimatedSize*1024));
       var logoPath := StringReplace(ApkInfo.DisplayIcon, '.ico', '.png', [rfReplaceAll]); 
       if FileExists(logoPath) then
@@ -1223,6 +1303,21 @@ begin
   ShellExecute(0, 'OPEN', 'explorer.exe', PChar('shell:::{4234d49b-0245-4df3-b780-3893943456e1}\'+WSA.AppUserModelID), nil, SW_SHOWNORMAL);
 end;
 
+procedure TfrmWinDroid.LoadINI;
+var
+  ini: TIniFile;
+begin
+  ini := TIniFile.Create(ExtractFilePath(ParamStr(0))+INIFILE);
+  try
+    ADB.Path := ini.ReadString('ADB', 'Path', '');
+    if FileExists(ADB.Path) then
+      leADBPath.Text := ADB.Path;
+    leDownloadsPath.Text := ini.ReadString('Settings', 'DownloadsPath', '');
+  finally
+    ini.Free;
+  end;
+end;
+
 procedure TfrmWinDroid.ManageAPK1Click(Sender: TObject);
 begin
   if (ControlListIndex >= 0) and (ControlList1.ItemCount > 0)
@@ -1243,6 +1338,13 @@ begin
   ShellExecute(0, 'OPEN', 'explorer.exe', PChar(GetWSAInstallationPath(WSA.AppUserModelID)), nil, SW_SHOWNORMAL);
 end;
 
+procedure TfrmWinDroid.pnlWSAStateMouseDown(Sender: TObject;
+  Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+begin
+  ReleaseCapture;
+  Perform(WM_SYSCOMMAND, $F012, 0);
+end;
+
 function TfrmWinDroid.ReplaceAmazonAppstore: Boolean;
 begin
 //https://amazonadsi-a.akamaihd.net/public/ix/stable/default/us/Amazon_App.apk
@@ -1251,6 +1353,21 @@ end;
 procedure TfrmWinDroid.RunAPK1Click(Sender: TObject);
 begin
   ControlList1DblClick(Sender);
+end;
+
+procedure TfrmWinDroid.SaveINI;
+var
+  ini: TIniFile;
+begin
+  ini := TIniFile.Create(ExtractFilePath(ParamStr(0)) + INIFILE);
+  try
+    if DirectoryExists(leDownloadsPath.Text) then
+      ini.WriteString('Settings', 'DownloadsPath', leDownloadsPath.Text);
+    if FileExists(ADB.Path) then
+      ini.WriteString('ADB', 'Path', ADB.Path);
+  finally
+    ini.Free;
+  end;
 end;
 
 procedure TfrmWinDroid.SearchBox1Change(Sender: TObject);

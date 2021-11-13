@@ -17,7 +17,9 @@ uses
   Vcl.Themes,
   Vcl.Styles,
   frmBrowser in 'frmBrowser.pas' {frmWeb},
-  helperFuncs in 'helperFuncs.pas';
+  helperFuncs in 'helperFuncs.pas',
+  adb in 'adb.pas',
+  frmApkViewer in 'frmApkViewer.pas' {frmApkViewerWnd};
 
 {$R *.res}
 
@@ -38,5 +40,6 @@ begin
   Application.CreateForm(TfrmWinDroid, frmWinDroid);
   Application.CreateForm(TfrmInstaller, frmInstaller);
   Application.CreateForm(TfrmWeb, frmWeb);
+  Application.CreateForm(TfrmApkViewerWnd, frmApkViewerWnd);
   Application.Run;
 end.

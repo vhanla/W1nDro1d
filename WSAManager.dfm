@@ -31,7 +31,7 @@ object frmWinDroid: TfrmWinDroid
     Width = 368
     Height = 415
     Align = alClient
-    ActiveCard = crdInstaller
+    ActiveCard = crdSettings
     BevelOuter = bvNone
     TabOrder = 0
     object crdApps: TCard
@@ -108,8 +108,8 @@ object frmWinDroid: TfrmWinDroid
         object lbListAPKTitle: TLabel
           Left = 65
           Top = 12
-          Width = 24
-          Height = 16
+          Width = 25
+          Height = 17
           Caption = 'Title'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
@@ -231,81 +231,227 @@ object frmWinDroid: TfrmWinDroid
       Caption = 'crdSettings'
       CardIndex = 3
       TabOrder = 3
-      object leADBPath: TLabeledEdit
-        Left = 12
-        Top = 22
-        Width = 285
-        Height = 21
-        EditLabel.Width = 207
-        EditLabel.Height = 13
-        EditLabel.Caption = 'ADB Path (e.g. C:\Platform-Tools\adb.exe)'
+      object PageControl1: TPageControl
+        Left = 0
+        Top = 0
+        Width = 368
+        Height = 415
+        ActivePage = tsADB
+        Align = alClient
         TabOrder = 0
-      end
-      object btnSearchADBPath: TButton
-        Left = 303
-        Top = 20
-        Width = 34
-        Height = 25
-        Caption = '...'
-        TabOrder = 1
-      end
-      object btnDownloadADB: TButton
-        Left = 263
-        Top = 49
-        Width = 106
-        Height = 25
-        Caption = 'Download ADB'
-        TabOrder = 2
-        OnClick = btnDownloadADBClick
-      end
-      object ProgressBar1: TProgressBar
-        Left = 12
-        Top = 56
-        Width = 245
-        Height = 10
-        TabOrder = 3
-      end
-      object LabeledEdit1: TLabeledEdit
-        Left = 12
-        Top = 102
-        Width = 285
-        Height = 21
-        EditLabel.Width = 81
-        EditLabel.Height = 13
-        EditLabel.Caption = 'Downloads Path:'
-        TabOrder = 4
-      end
-      object Button1: TButton
-        Left = 303
-        Top = 100
-        Width = 34
-        Height = 25
-        Caption = '...'
-        TabOrder = 5
-      end
-      object CheckBox1: TCheckBox
-        Left = 32
-        Top = 144
-        Width = 273
-        Height = 17
-        Caption = 'Start with Windows logon'
-        TabOrder = 6
-      end
-      object CheckBox2: TCheckBox
-        Left = 32
-        Top = 167
-        Width = 273
-        Height = 17
-        Caption = 'F11 hotkey to toggle Android app FullScreen'
-        TabOrder = 7
-      end
-      object CheckBox3: TCheckBox
-        Left = 32
-        Top = 190
-        Width = 273
-        Height = 17
-        Caption = 'Register as default .APK installer'
-        TabOrder = 8
+        object tsADB: TTabSheet
+          Caption = 'ADB'
+          object GroupBox1: TGroupBox
+            Left = 3
+            Top = 3
+            Width = 354
+            Height = 126
+            Caption = 'ADB Path or Download'
+            TabOrder = 0
+            object leADBPath: TLabeledEdit
+              Left = 11
+              Top = 40
+              Width = 285
+              Height = 21
+              EditLabel.Width = 207
+              EditLabel.Height = 13
+              EditLabel.Caption = 'ADB Path (e.g. C:\Platform-Tools\adb.exe)'
+              TabOrder = 0
+            end
+            object btnSearchADBPath: TButton
+              Left = 302
+              Top = 36
+              Width = 34
+              Height = 25
+              Caption = '...'
+              TabOrder = 1
+              OnClick = btnSearchADBPathClick
+            end
+            object btnDownloadADB: TButton
+              Left = 247
+              Top = 74
+              Width = 94
+              Height = 25
+              Caption = 'Download ADB'
+              TabOrder = 2
+              OnClick = btnDownloadADBClick
+            end
+            object ProgressBar1: TProgressBar
+              Left = 11
+              Top = 83
+              Width = 230
+              Height = 10
+              TabOrder = 3
+            end
+          end
+          object gbADBinfo: TGroupBox
+            Left = 3
+            Top = 144
+            Width = 354
+            Height = 105
+            Caption = 'ADB Info'
+            TabOrder = 1
+            object lblADBVersion: TLabel
+              Left = 11
+              Top = 24
+              Width = 42
+              Height = 13
+              Caption = 'Version: '
+            end
+            object lblPublisher: TLabel
+              Left = 11
+              Top = 43
+              Width = 47
+              Height = 13
+              Caption = 'Publisher:'
+            end
+            object lblADBStatus: TLabel
+              Left = 11
+              Top = 62
+              Width = 93
+              Height = 13
+              Caption = 'ADB Server Status:'
+            end
+            object lblADBPort: TLabel
+              Left = 11
+              Top = 81
+              Width = 82
+              Height = 13
+              Caption = 'ADB Server Port:'
+            end
+            object edADBPort: TEdit
+              Left = 105
+              Top = 78
+              Width = 41
+              Height = 21
+              NumbersOnly = True
+              TabOrder = 0
+              Text = '5037'
+            end
+          end
+          object btnAdbStatus: TButton
+            Left = 56
+            Top = 272
+            Width = 243
+            Height = 25
+            Caption = 'Check ADB again'
+            TabOrder = 2
+            OnClick = btnAdbStatusClick
+          end
+        end
+        object tsMisc: TTabSheet
+          Caption = 'Misc'
+          ImageIndex = 1
+          object leDownloadsPath: TLabeledEdit
+            Left = 20
+            Top = 38
+            Width = 285
+            Height = 21
+            EditLabel.Width = 81
+            EditLabel.Height = 13
+            EditLabel.Caption = 'Downloads Path:'
+            TabOrder = 0
+          end
+          object Button1: TButton
+            Left = 311
+            Top = 36
+            Width = 34
+            Height = 25
+            Caption = '...'
+            TabOrder = 1
+          end
+          object gbWSAUtils: TGroupBox
+            Left = 20
+            Top = 248
+            Width = 317
+            Height = 105
+            Caption = 'WSA Utils'
+            TabOrder = 2
+            object cbFullScreenF11: TCheckBox
+              Left = 20
+              Top = 24
+              Width = 273
+              Height = 17
+              Caption = 'F11 hotkey to toggle Android app FullScreen'
+              TabOrder = 0
+            end
+          end
+          object gbAppSettings: TGroupBox
+            Left = 20
+            Top = 88
+            Width = 317
+            Height = 145
+            Caption = 'App Settings'
+            TabOrder = 3
+            object cbAPKShellRegister: TCheckBox
+              Left = 20
+              Top = 47
+              Width = 273
+              Height = 17
+              Caption = 'Register as default .APK installer'
+              TabOrder = 0
+            end
+            object cbAutostart: TCheckBox
+              Left = 20
+              Top = 24
+              Width = 273
+              Height = 17
+              Caption = 'Start with Windows logon'
+              TabOrder = 1
+            end
+            object cbHKShow: TCheckBox
+              Left = 20
+              Top = 70
+              Width = 221
+              Height = 17
+              Caption = 'Global HotKey - Show/Hide this window'
+              TabOrder = 2
+            end
+            object HotKey1: THotKey
+              Left = 20
+              Top = 93
+              Width = 253
+              Height = 19
+              HotKey = 32833
+              TabOrder = 3
+            end
+          end
+        end
+        object tsNotifications: TTabSheet
+          Caption = 'Notifications'
+          ImageIndex = 2
+          object lbNotify: TLabel
+            Left = 24
+            Top = 24
+            Width = 212
+            Height = 13
+            Caption = 'Notiy events in Windows notification center.'
+          end
+          object cbNotifyADB: TCheckBox
+            Left = 32
+            Top = 102
+            Width = 177
+            Height = 17
+            Caption = 'Notify ADB Server ON/OFF'
+            TabOrder = 0
+          end
+          object cbNotifyAPKInstalled: TCheckBox
+            Left = 32
+            Top = 79
+            Width = 177
+            Height = 17
+            Caption = 'Notify on APK install/uninstall'
+            TabOrder = 1
+          end
+          object cbNotifyWSAStatus: TCheckBox
+            Left = 32
+            Top = 56
+            Width = 177
+            Height = 17
+            Caption = 'Notify on WSA ON/OFF'
+            TabOrder = 2
+          end
+        end
       end
     end
   end
@@ -317,6 +463,7 @@ object frmWinDroid: TfrmWinDroid
     Align = alTop
     BevelOuter = bvNone
     TabOrder = 1
+    OnMouseDown = pnlWSAStateMouseDown
     object Image1: TImage
       Left = 12
       Top = 23
@@ -867,8 +1014,8 @@ object frmWinDroid: TfrmWinDroid
     object lbWSAInfo: TLabel
       Left = 66
       Top = 8
-      Width = 270
-      Height = 16
+      Width = 287
+      Height = 17
       Caption = 'Windows Subsystem for Android '#8482' (not found)'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
@@ -880,8 +1027,8 @@ object frmWinDroid: TfrmWinDroid
     object lbWSAVersion: TLabel
       Left = 66
       Top = 23
-      Width = 128
-      Height = 15
+      Width = 126
+      Height = 16
       Caption = 'WSAVersion (not found)'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
@@ -895,7 +1042,7 @@ object frmWinDroid: TfrmWinDroid
       Left = 66
       Top = 73
       Width = 136
-      Height = 14
+      Height = 15
       Caption = 'AppModelUserId (not found)'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
@@ -907,8 +1054,8 @@ object frmWinDroid: TfrmWinDroid
     object lbWSAMinWinVer: TLabel
       Left = 66
       Top = 39
-      Width = 198
-      Height = 15
+      Width = 197
+      Height = 16
       Caption = 'Minimum Windows Build (not found)'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
@@ -921,8 +1068,8 @@ object frmWinDroid: TfrmWinDroid
     object lbWSAPublisher: TLabel
       Left = 66
       Top = 56
-      Width = 115
-      Height = 15
+      Width = 113
+      Height = 16
       Caption = 'Publisher (not found)'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
@@ -935,8 +1082,8 @@ object frmWinDroid: TfrmWinDroid
     object lbWSAForeground: TLabel
       Left = 66
       Top = 99
-      Width = 124
-      Height = 15
+      Width = 126
+      Height = 16
       Caption = 'WSA App in foreground'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
@@ -1023,7 +1170,7 @@ object frmWinDroid: TfrmWinDroid
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -21
-      Font.Name = 'Segoe Fluent Icons'
+      Font.Name = 'Segoe MDL2 Assets'
       Font.Style = []
       Font.Quality = fqClearTypeNatural
       ParentFont = False
@@ -1046,7 +1193,7 @@ object frmWinDroid: TfrmWinDroid
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -21
-      Font.Name = 'Segoe Fluent Icons'
+      Font.Name = 'Segoe MDL2 Assets'
       Font.Style = []
       Font.Quality = fqClearTypeNatural
       ParentFont = False
@@ -1068,7 +1215,7 @@ object frmWinDroid: TfrmWinDroid
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -21
-      Font.Name = 'Segoe Fluent Icons'
+      Font.Name = 'Segoe MDL2 Assets'
       Font.Style = []
       Font.Quality = fqClearTypeNatural
       ParentFont = False
@@ -1091,7 +1238,7 @@ object frmWinDroid: TfrmWinDroid
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -21
-      Font.Name = 'Segoe Fluent Icons'
+      Font.Name = 'Segoe MDL2 Assets'
       Font.Style = []
       Font.Quality = fqClearTypeNatural
       ParentFont = False
@@ -1111,8 +1258,8 @@ object frmWinDroid: TfrmWinDroid
     PopupMenu = PopupMenu1
     Visible = True
     OnClick = TrayIcon1Click
-    Left = 136
-    Top = 360
+    Left = 312
+    Top = 304
   end
   object PopupMenu1: TPopupMenu
     Left = 280
@@ -1177,9 +1324,16 @@ object frmWinDroid: TfrmWinDroid
         OnClick = Contacts1Click
       end
     end
+    object N5: TMenuItem
+      Caption = '-'
+    end
     object SearchInstallAPKs1: TMenuItem
       Caption = 'Search & Install APKs'
       OnClick = SearchInstallAPKs1Click
+    end
+    object ExploreAPK1: TMenuItem
+      Caption = 'Explore APK'
+      OnClick = ExploreAPK1Click
     end
     object N2: TMenuItem
       Caption = '-'
@@ -1199,6 +1353,9 @@ object frmWinDroid: TfrmWinDroid
     object SearchUpdates1: TMenuItem
       Caption = 'Search Updates'
       OnClick = SearchUpdates1Click
+    end
+    object N4: TMenuItem
+      Caption = '-'
     end
     object UninstallAPK1: TMenuItem
       Caption = 'Uninstall APK'
@@ -1229,5 +1386,13 @@ object frmWinDroid: TfrmWinDroid
     OptimizedMove = True
     Left = 84
     Top = 277
+  end
+  object NotificationCenter1: TNotificationCenter
+    Left = 288
+    Top = 424
+  end
+  object OpenDialog1: TOpenDialog
+    Left = 124
+    Top = 157
   end
 end

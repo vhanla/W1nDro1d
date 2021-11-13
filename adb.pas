@@ -25,7 +25,7 @@ type
     function StartServer(forceRestart: Boolean = False): Boolean;
     function StopServer: Boolean;
     function IsADBServerOn: Boolean;
-    function ConnectSocket: Boolean;
+    function ConnectSocket(port: Integer = 5037): Boolean;
     function RunScript(const command: string): string;
 
     constructor Create;
@@ -40,10 +40,13 @@ implementation
 
 { TADB }
 
-function TADB.ConnectSocket: Boolean;
+function TADB.ConnectSocket(port: Integer = 5037): Boolean;
 begin
   FClient.Address := FHost;
-  FClient.Port := FPort;
+  if port <> 5037 then
+    FClient.Port := port
+  else
+    FClient.Port := FPort;
   FClient.Active := True; // Activates the client
 
   Result := FClient.Socket.Connected;
@@ -81,7 +84,7 @@ procedure TADB.OnSocketError(Sender: TObject; Socket: TCustomWinSocket;
   ErrorEvent: TErrorEvent; var ErrorCode: Integer);
 begin
   ErrorCode := 0;
-  FClient.Active := False;
+//  FClient.Active := False;
 // This can happen when no active server is started
   // do something
 end;

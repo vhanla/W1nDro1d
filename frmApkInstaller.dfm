@@ -23,7 +23,7 @@ object frmInstaller: TfrmInstaller
     636
     445)
   PixelsPerInch = 96
-  TextHeight = 14
+  TextHeight = 15
   object lbAPKDisplayName: TLabel
     Left = 24
     Top = 44
@@ -43,8 +43,8 @@ object frmInstaller: TfrmInstaller
   object lbPublisher: TLabel
     Left = 24
     Top = 144
-    Width = 58
-    Height = 16
+    Width = 56
+    Height = 17
     Caption = 'Publisher:'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
@@ -57,8 +57,8 @@ object frmInstaller: TfrmInstaller
   object lbVersion: TLabel
     Left = 24
     Top = 166
-    Width = 47
-    Height = 16
+    Width = 46
+    Height = 17
     Caption = 'Version:'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
@@ -71,8 +71,8 @@ object frmInstaller: TfrmInstaller
   object lbCertificate: TLabel
     Left = 24
     Top = 122
-    Width = 41
-    Height = 16
+    Width = 40
+    Height = 17
     Caption = 'Signer:'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clHighlight
@@ -87,7 +87,7 @@ object frmInstaller: TfrmInstaller
     Left = 24
     Top = 204
     Width = 67
-    Height = 16
+    Height = 17
     Caption = 'Capabilities'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
@@ -102,6 +102,7 @@ object frmInstaller: TfrmInstaller
     Top = 49
     Width = 90
     Height = 90
+    Anchors = [akTop, akRight]
     Stretch = Fill
   end
   object btnLaunch: TButton
@@ -156,8 +157,8 @@ object frmInstaller: TfrmInstaller
     object lbAbout: TLabel
       Left = 16
       Top = 16
-      Width = 41
-      Height = 18
+      Width = 43
+      Height = 21
       Caption = 'About'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
@@ -170,8 +171,8 @@ object frmInstaller: TfrmInstaller
     object lbInsVersion: TLabel
       Left = 16
       Top = 39
-      Width = 143
-      Height = 16
+      Width = 130
+      Height = 17
       Caption = 'APK Installer 1.0.211028'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
@@ -184,8 +185,8 @@ object frmInstaller: TfrmInstaller
     object Label1: TLabel
       Left = 16
       Top = 62
-      Width = 214
-      Height = 16
+      Width = 217
+      Height = 17
       Caption = #169' 2021 Codigobit. All rights reserved.'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
@@ -212,8 +213,8 @@ object frmInstaller: TfrmInstaller
     object lnkWebSite: TLinkLabel
       Left = 20
       Top = 85
-      Width = 63
-      Height = 20
+      Width = 64
+      Height = 21
       Cursor = crHandPoint
       Caption = '<a href="https://codigobit.net">Codigobit</a>'
       Font.Charset = DEFAULT_CHARSET
@@ -229,8 +230,8 @@ object frmInstaller: TfrmInstaller
     object lnkRepository: TLinkLabel
       Left = 20
       Top = 112
-      Width = 114
-      Height = 20
+      Width = 113
+      Height = 21
       Cursor = crHandPoint
       Caption = 
         '<a href="https://github.com/vhanla/W1nDro1d">GitHub Repository</' +
@@ -341,29 +342,6 @@ object frmInstaller: TfrmInstaller
     TabOrder = 6
     OnClick = Button1Click
   end
-  object SynEdit1: TSynEdit
-    Left = 86
-    Top = 122
-    Width = 512
-    Height = 223
-    Font.Charset = DEFAULT_CHARSET
-    Font.Color = clWindowText
-    Font.Height = -13
-    Font.Name = 'Consolas'
-    Font.Style = []
-    Font.Quality = fqClearTypeNatural
-    TabOrder = 7
-    Visible = False
-    UseCodeFolding = False
-    Gutter.Font.Charset = DEFAULT_CHARSET
-    Gutter.Font.Color = clWindowText
-    Gutter.Font.Height = -11
-    Gutter.Font.Name = 'Consolas'
-    Gutter.Font.Style = []
-    Highlighter = SynUNIXShellScriptSyn1
-    Lines.Strings = (
-      'SynEdit1')
-  end
   object btnReUnInstall: TButton
     Left = 378
     Top = 360
@@ -386,9 +364,34 @@ object frmInstaller: TfrmInstaller
     Top = 407
     Width = 33
     Height = 30
+    Anchors = [akLeft, akBottom]
     Caption = 'Log'
     TabOrder = 8
     OnClick = btnLogClick
+  end
+  object SynEdit1: TSynEdit
+    Left = 8
+    Top = 81
+    Width = 620
+    Height = 320
+    Anchors = [akLeft, akTop, akRight, akBottom]
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -13
+    Font.Name = 'Consolas'
+    Font.Style = []
+    Font.Quality = fqClearTypeNatural
+    TabOrder = 7
+    Visible = False
+    UseCodeFolding = False
+    Gutter.Font.Charset = DEFAULT_CHARSET
+    Gutter.Font.Color = clWindowText
+    Gutter.Font.Height = -11
+    Gutter.Font.Name = 'Consolas'
+    Gutter.Font.Style = []
+    Gutter.RightMargin = 8
+    Gutter.ShowLineNumbers = True
+    Highlighter = SynUNIXShellScriptSyn1
   end
   object DCAapt: TDosCommand
     InputToOutput = False

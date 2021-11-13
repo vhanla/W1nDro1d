@@ -20,7 +20,7 @@ object frmWeb: TfrmWeb
     Top = 0
     Width = 704
     Height = 485
-    ActivePage = TabSheet1
+    ActivePage = TabSheet2
     Align = alClient
     TabOrder = 0
     object TabSheet1: TTabSheet
@@ -91,6 +91,20 @@ object frmWeb: TfrmWeb
         Status = ''
         ProgressTop = 'Message 1'
         ProgressBottom = '0kb/s'
+      end
+      object FileListBox1: TFileListBox
+        Left = 0
+        Top = 60
+        Width = 696
+        Height = 397
+        Align = alClient
+        ItemHeight = 24
+        Mask = '*.apk;*.xapk'
+        ParentShowHint = False
+        ShowGlyphs = True
+        ShowHint = False
+        TabOrder = 1
+        OnDblClick = FileListBox1DblClick
       end
     end
   end

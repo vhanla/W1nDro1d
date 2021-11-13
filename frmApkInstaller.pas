@@ -215,7 +215,7 @@ end;
 
 procedure TfrmInstaller.lbCertificateClick(Sender: TObject);
 begin
-  DCPKCS7.CommandLine := 'openssl pkcs7 -in '+GetRSAFile()+' -inform DER -print_certs | openssl x509 -text -noout'
+//  DCPKCS7.CommandLine := 'openssl pkcs7 -in '+GetRSAFile()+' -inform DER -print_certs | openssl x509 -text -noout'
 end;
 
 procedure TfrmInstaller.lnkRepositoryLinkClick(Sender: TObject;
