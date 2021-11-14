@@ -338,6 +338,22 @@ object frmWinDroid: TfrmWinDroid
             TabOrder = 2
             OnClick = btnAdbStatusClick
           end
+          object edADBSocketCommand: TEdit
+            Left = 14
+            Top = 303
+            Width = 325
+            Height = 21
+            TabOrder = 3
+          end
+          object btnShellCommand: TButton
+            Left = 14
+            Top = 330
+            Width = 325
+            Height = 25
+            Caption = 'ADB Socket Message'
+            TabOrder = 4
+            OnClick = btnShellCommandClick
+          end
         end
         object tsMisc: TTabSheet
           Caption = 'Misc'

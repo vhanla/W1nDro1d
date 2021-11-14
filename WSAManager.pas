@@ -197,6 +197,8 @@ type
     btnAdbStatus: TButton;
     OpenDialog1: TOpenDialog;
     edADBPort: TEdit;
+    edADBSocketCommand: TEdit;
+    btnShellCommand: TButton;
     procedure Exit1Click(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure FormCreate(Sender: TObject);
@@ -236,6 +238,7 @@ type
     procedure btnSearchADBPathClick(Sender: TObject);
     procedure pnlWSAStateMouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
+    procedure btnShellCommandClick(Sender: TObject);
   protected
     // TaskbarLocation
     function GetMainTaskbarPosition: Integer;
@@ -742,6 +745,13 @@ begin
     SaveINI;
   end;
 
+end;
+
+procedure TfrmWinDroid.btnShellCommandClick(Sender: TObject);
+begin
+//  ADB.RunScript(edADBSocketCommand.Text);
+  ShellExecute(0, 'OPEN', PChar(ADB.Path), PChar('connect 127.0.0.1:58526'), nil, SW_SHOWNORMAL);
+  ShellExecute(0, 'OPEN', PChar(ADB.Path), PChar(edADBSocketCommand.Text), nil, SW_SHOWNORMAL);
 end;
 
 procedure TfrmWinDroid.CheckWsaClientStatus;
