@@ -97,6 +97,7 @@ type
     FApkInfo: TApkDetails;
     FApkPermissions: TStringList;
     procedure GetAPKInfoWithAndroidAssetPackagingTool;
+    procedure GetXAPKInfo;
   end;
 
 var
@@ -105,7 +106,8 @@ var
 implementation
 
 uses
-  Winapi.ShellAPI, WSAManager, UWP.ColorManager, RegularExpressions;
+  Winapi.ShellAPI, WSAManager, UWP.ColorManager, RegularExpressions,
+  System.JSON, Rest.Json, System.Zip;
 
 {$R *.dfm}
 
@@ -210,6 +212,57 @@ begin
     DCAapt.InputToOutput := False;
     DCAapt.CommandLine := cmdline;
     DCAapt.Execute;
+  end;
+end;
+
+procedure TfrmInstaller.GetXAPKInfo;
+var
+  json: TJSONObject;
+  zip: TZipFile;
+  I: Integer;
+  zipHeader: TZipHeader;
+  buff: TStream;
+begin
+
+  //extract manifest.json from *.xapk to read its info
+
+  zip := TZipFile.Create;
+  json := TJsonObject.Create;
+  try
+    if TZipFile.IsValid(FApkFile) then
+    begin
+      try
+        zip.Open(FApkFile, zmRead);
+        for I := Low(zip.FileNames) to High(zip.FileNames) do
+        begin
+          var f := zip.FileNames[I];
+          if LowerCase(f) = 'manifest.json' then
+          begin
+            buff := TStream.Create;
+            try
+              zip.Read(I, buff, zipHeader);
+//              buff.Position := 0;
+              SynEdit1.Lines.LoadFromStream(buff);
+              //if json.Parse(SynEdit1.Text, 0) > 0 then
+              begin
+                //let's find its details from json
+
+              end;
+            finally
+              buff.Free;
+            end;
+            Break; // found and break
+          end;
+        end;
+      finally
+        zip.Close;
+      end;
+    end;
+
+
+  finally
+    json.Free;
+    zip.Free;
   end;
 end;
 
