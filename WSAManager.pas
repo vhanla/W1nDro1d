@@ -254,6 +254,7 @@ type
     procedure GetApkInfo(var Apk: TAPKInfo; const PackageName: string);
 
     procedure CreateParams(var Params: TCreateParams); override;
+    procedure NoBorder(var Msg: TWMNCActivate); message WM_NCACTIVATE;
 
     procedure CreateBlurBackground;
     procedure DestroyBlurBackground;
@@ -749,9 +750,12 @@ end;
 
 procedure TfrmWinDroid.btnShellCommandClick(Sender: TObject);
 begin
-//  ADB.RunScript(edADBSocketCommand.Text);
-  ShellExecute(0, 'OPEN', PChar(ADB.Path), PChar('connect 127.0.0.1:58526'), nil, SW_SHOWNORMAL);
-  ShellExecute(0, 'OPEN', PChar(ADB.Path), PChar(edADBSocketCommand.Text), nil, SW_SHOWNORMAL);
+// encode message
+  var hex := inttohex(WORD(Length(edADBSocketCommand.Text)));
+  ADB.ConnectSocket() ;
+  ShowMessage( ADB.RunScript(PChar(Format('%4s%s',[hex,edADBSocketCommand.Text]))));
+//  ShellExecute(0, 'OPEN', PChar(ADB.Path), PChar('connect 127.0.0.1:58526'), nil, SW_SHOWNORMAL);
+//  ShellExecute(0, 'OPEN', PChar(ADB.Path), PChar(edADBSocketCommand.Text), nil, SW_SHOWNORMAL);
 end;
 
 procedure TfrmWinDroid.CheckWsaClientStatus;
@@ -911,7 +915,10 @@ begin
       frmInstaller.FApkInfo.Icon := '';
 
       frmInstaller.FApkPermissions.Clear;
-      frmInstaller.GetAPKInfoWithAndroidAssetPackagingTool;
+      if ext = '.xapk' then
+        frmInstaller.GetXAPKInfo
+      else
+        frmInstaller.GetAPKInfoWithAndroidAssetPackagingTool;
     end
     else
       lbDropMsg.Caption := 'Only .apk and .xapk file type accepted!';
@@ -1341,6 +1348,12 @@ begin
     end;
 
   end;
+end;
+
+procedure TfrmWinDroid.NoBorder(var Msg: TWMNCActivate);
+begin
+  Msg.Active := False;
+  inherited;
 end;
 
 procedure TfrmWinDroid.OpenWSAInstallationFolder1Click(Sender: TObject);
