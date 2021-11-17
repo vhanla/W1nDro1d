@@ -431,6 +431,7 @@ begin
         var style := GetWindowLong(ForegroundWSA, GWL_STYLE);
         if (style and WS_CAPTION = WS_CAPTION)
         and (style and WS_THICKFRAME = WS_THICKFRAME)
+        and (style and WS_MAXIMIZE <> WS_MAXIMIZE)
         then
         begin
           style := style and not WS_CAPTION;
