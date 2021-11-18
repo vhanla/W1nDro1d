@@ -154,7 +154,10 @@ begin
   frmInstaller.FApkInfo.Icon := '';
 
   frmInstaller.FApkPermissions.Clear;
-  frmInstaller.GetAPKInfoWithAndroidAssetPackagingTool;
+  if LowerCase(FileListBox1.Items[FileListBox1.ItemIndex]).Contains('.xapk') then
+    frmInstaller.GetXAPKInfo
+  else
+    frmInstaller.GetAPKInfoWithAndroidAssetPackagingTool;
 end;
 
 procedure TfrmWeb.FormCreate(Sender: TObject);
