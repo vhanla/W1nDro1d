@@ -239,6 +239,7 @@ type
     procedure pnlWSAStateMouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
     procedure btnShellCommandClick(Sender: TObject);
+    procedure pnlDropDblClick(Sender: TObject);
   protected
     // TaskbarLocation
     function GetMainTaskbarPosition: Integer;
@@ -252,6 +253,7 @@ type
     function IsWsaClientRunning:Boolean;
     procedure CheckWsaClientStatus;
     procedure GetApkInfo(var Apk: TAPKInfo; const PackageName: string);
+    function GetCurrentWSAVersionFromStore: string;
 
     procedure CreateParams(var Params: TCreateParams); override;
     procedure NoBorder(var Msg: TWMNCActivate); message WM_NCACTIVATE;
@@ -297,7 +299,8 @@ uses
   Winapi.ShellAPI, System.Win.Registry, Winapi.msxml, System.IOUtils,
   Winapi.KnownFolders, Winapi.ShlObj, Winapi.ActiveX, System.Win.ComObj,
   Winapi.PropKey, Winapi.oleacc, System.Threading, frmBrowser,
-  UWP.ColorManager, helperFuncs, Winapi.GDIPAPI, System.IniFiles;
+  UWP.ColorManager, helperFuncs, Winapi.GDIPAPI, System.IniFiles,
+  Net.Mime, System.RegularExpressions;
 
 const
   WM_TOGGLEFULLSCREEN = WM_USER + 9;
@@ -418,6 +421,7 @@ begin
   begin
     msg := PCWPRetStruct(lParam)^;
 
+    // v 1.7.32815.0, v 1.8.32822.0 seems includes Fullscreen mode
     if (msg.message = WM_TOGGLEFULLSCREEN) then
     begin
 //      OutputDebugString('F11 EVENT');
@@ -1078,6 +1082,79 @@ begin
   end;
 end;
 
+function TfrmWinDroid.GetCurrentWSAVersionFromStore: string;
+var
+  net: THTTPClient;
+  vResp: IHTTPResponse;
+  vResponse: TStringStream;
+  vParams: TMultipartFormData;
+begin
+  TTask.Run(
+    procedure
+    begin
+      net := nil;
+      try
+        net := THTTPClient.Create;
+        vResponse := TStringStream.Create;
+        vParams := TMultipartFormData.Create();
+        try
+          net.SetUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:92.0) Gecko/20100101 Firefox/92.0');
+          net.ConnectionTimeout := 3000; //ms
+          vParams.AddField('type','ProductId');
+          vParams.AddField('url','9p3395vx91nr');
+          vParams.AddField('ring','WIS');
+          vParams.AddField('lang', 'en-US');
+          vResp := net.Post('https://store.rg-adguard.net/api/GetFiles', vParams, vResponse);
+          TThread.Synchronize(nil,
+            procedure
+            var
+              sname: string;
+            begin
+              try
+                if vResp.StatusCode = 200 then
+                begin
+                  vResponse.Position := 0;
+                  var cad := TStringList.Create;
+                  try
+                    cad.Text := vResponse.DataString;
+                    var I: Integer;
+                    for I := 0 to cad.Count - 1 do
+                    begin
+                      if cad[I].Contains('.msixbundle') then
+                      begin
+                        //(?<=href=")[^"]* get url
+                        //(?<=noreferrer">)[^<\/]* get name
+                        //(?<=_)[0-9]+.[0-9]+.[0-9]+.[0-9]+[^_]* get version
+                        sname := TRegEx.Match(cad[I], '(?<=noreferrer">)[^<\/]*').Value;
+                        var fversion := TRegEx.Match(sname, '(?<=_)[0-9]+.[0-9]+.[0-9]+.[0-9]+[^_]*').Value;
+                        ShowMessage('Version found: ' +fVersion);
+                      end;
+                    end;
+
+                  finally
+                    cad.Free;
+                  end;
+                end;
+
+              finally
+                vResp := nil;
+              end;
+            end
+          );
+
+        except
+
+        end;
+      finally
+        vParams.Free;
+        vResponse.Free;
+        FreeAndNil(net);
+      end;
+    end
+  );
+
+end;
+
 function TfrmWinDroid.GetMainTaskbarPosition: Integer;
 const ABNONE = -1;
 var
@@ -1360,6 +1437,11 @@ end;
 procedure TfrmWinDroid.OpenWSAInstallationFolder1Click(Sender: TObject);
 begin
   ShellExecute(0, 'OPEN', 'explorer.exe', PChar(GetWSAInstallationPath(WSA.AppUserModelID)), nil, SW_SHOWNORMAL);
+end;
+
+procedure TfrmWinDroid.pnlDropDblClick(Sender: TObject);
+begin
+  GetCurrentWSAVersionFromStore;
 end;
 
 procedure TfrmWinDroid.pnlWSAStateMouseDown(Sender: TObject;
