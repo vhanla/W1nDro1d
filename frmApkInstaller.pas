@@ -91,6 +91,7 @@ type
   private
     { Private declarations }
     FArchive: TJclDecompressArchive;
+    FZipContents: TStringList;
   public
     { Public declarations }
     FApkFile: string;
@@ -107,7 +108,7 @@ implementation
 
 uses
   Winapi.ShellAPI, WSAManager, UWP.ColorManager, RegularExpressions,
-  System.JSON, Rest.Json, System.Zip;
+  System.JSON, Rest.Json, System.Zip, JclCompression;
 
 {$R *.dfm}
 
@@ -162,16 +163,65 @@ begin
   if FApkInfo.Icon = '' then
     if Pos('application-icon-', ANewLine) = 1 then
       FApkInfo.Icon := TRegEx.Match(ANewLine, '(?<=:'')[^'']*').Value;
-
 end;
 
 procedure TfrmInstaller.DCAaptTerminated(Sender: TObject);
+var
+  zip: TZipFile;
+  I: Integer;
+  zipHeader: TZipHeader;
+  picBuff: TStream;
 begin
   lbAPKDisplayName.Caption := FApkInfo.DisplayName;
   lbCapabilities.Caption := 'Capabilities';
   lbVersion.Caption := 'Version: ' + FApkInfo.DisplayVersion;
   lbPublisher.Caption := 'Icon: ' + FApkInfo.Icon;
   apkInstallerMemo.Lines := FApkPermissions;
+
+  // just a dummy ficticious path to use extractfilename, extractfileext, etc.
+  // since zip files path starts with no c:\ neither backslashes
+  var dummypath := LowerCase(StringReplace('c:/'+fapkinfo.icon, '/', '\', [rfReplaceAll]));
+
+  if ExtractFileExt(dummypath) = '.png' then
+  // open it and show
+  begin
+    zip := TZipFile.Create;
+    try
+      if TZipFile.IsValid(FApkFile) then
+      begin
+        zip.Open(FApkFile, zmRead);
+
+        //load icon
+        picBuff := TStream.Create;
+        try
+          zip.Read(FApkInfo.Icon, picBuff, zipHeader);
+          eApkImage.Picture.LoadFromStream(picBuff);
+        finally
+          picBuff.Free;
+        end;
+      end;
+    finally
+      zip.Free;
+    end;
+  end
+  else  // Open .APK file as ZipFile, list contents and try to find an icon that match some brute force search
+  if (FApkInfo.Icon <> '') and (FZipContents.Count = 0) then
+  begin
+    zip := TZipFile.Create;
+    try
+      if TZipFile.IsValid(FApkFile) then
+      begin
+        zip.Open(FApkFile, zmRead);
+        for I := Low(zip.FileNames) to High(zip.FileNames) - 1 do
+        begin
+          FZipContents.Add(zip.FileNames[I]);
+        end;
+        apkInstallerMemo.Lines := FZipContents;
+      end;
+    finally
+      zip.Free;
+    end;
+  end;
 end;
 
 procedure TfrmInstaller.DCAaptTerminateProcess(ASender: TObject;
@@ -188,6 +238,7 @@ end;
 procedure TfrmInstaller.FormCreate(Sender: TObject);
 begin
   FApkPermissions := TStringList.Create;
+  FZipContents := TStringList.Create;
 //  pnlCaption.Height := GetSystemMetrics(SM_CYCAPTION) + GetSystemMetrics(SM_CXBORDER);
 //  pnlAbout.Rounded := True;
   ColorizationManager.ColorizationType :=  TUWPColorizationType.ctLight;
@@ -196,6 +247,7 @@ end;
 procedure TfrmInstaller.FormDestroy(Sender: TObject);
 begin
   DCAapt.Stop;
+  FZipContents.Free;
   FApkPermissions.Free;
 end;
 
@@ -209,6 +261,7 @@ begin
     if DCAapt.IsRunning then
       DCAapt.Stop;
 
+    FZipContents.Clear;
     DCAapt.InputToOutput := False;
     DCAapt.CommandLine := cmdline;
     DCAapt.Execute;
@@ -221,7 +274,8 @@ var
   zip: TZipFile;
   I: Integer;
   zipHeader: TZipHeader;
-  buff: TStream;
+  buff: TBytes;
+  picBuff: TStream;
 begin
 
   //extract manifest.json from *.xapk to read its info
@@ -233,29 +287,29 @@ begin
     begin
       try
         zip.Open(FApkFile, zmRead);
-        for I := Low(zip.FileNames) to High(zip.FileNames) do
-        begin
-          var f := zip.FileNames[I];
-          if LowerCase(f) = 'manifest.json' then
-          begin
-            buff := TStream.Create;
-            try
-              zip.Read(I, buff, zipHeader);
-//              buff.Position := 0;
-              SynEdit1.Lines.LoadFromStream(buff);
-              //if json.Parse(SynEdit1.Text, 0) > 0 then
-              begin
-                //let's find its details from json
 
-              end;
+          zip.Read('manifest.json', buff);
+          if json.Parse(buff, 0) > 0 then
+          begin
+            //let's find its details from json
+            SynEdit1.Text := json.ToString;//TEncoding.UTF8.GetString(buff);
+
+            lbAPKDisplayName.Caption := json.Values['name'].Value;
+            lbVersion.Caption := json.Values['version_name'].Value;
+            //
+            var icon := json.Values['icon'].Value;
+            apkInstallerMemo.Text := json.Values['permissions'].ToString;
+            //load icon
+            picBuff := TStream.Create;
+            try
+            zip.Read(icon, picBuff, zipHeader);
+            eApkImage.Picture.LoadFromStream(picBuff);
             finally
-              buff.Free;
+              picBuff.Free;
             end;
-            Break; // found and break
           end;
-        end;
       finally
-        zip.Close;
+          zip.Close;
       end;
     end;
 
