@@ -17,6 +17,7 @@ object frmInstaller: TfrmInstaller
   StyleElements = [seFont, seClient]
   StyleName = 'Windows'
   OnClick = FormClick
+  OnClose = FormClose
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   DesignSize = (
@@ -371,9 +372,9 @@ object frmInstaller: TfrmInstaller
   end
   object SynEdit1: TSynEdit
     Left = 8
-    Top = 81
+    Top = 248
     Width = 620
-    Height = 320
+    Height = 153
     Anchors = [akLeft, akTop, akRight, akBottom]
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
