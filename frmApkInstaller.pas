@@ -88,6 +88,7 @@ type
     procedure FormDestroy(Sender: TObject);
     procedure DCAaptTerminated(Sender: TObject);
     procedure lbCertificateClick(Sender: TObject);
+    procedure FormClose(Sender: TObject; var Action: TCloseAction);
   private
     { Private declarations }
     FArchive: TJclDecompressArchive;
@@ -108,7 +109,7 @@ implementation
 
 uses
   Winapi.ShellAPI, WSAManager, UWP.ColorManager, RegularExpressions,
-  System.JSON, Rest.Json, System.Zip, JclCompression;
+  System.JSON, Rest.Json, System.Zip;
 
 {$R *.dfm}
 
@@ -171,11 +172,13 @@ var
   I: Integer;
   zipHeader: TZipHeader;
   picBuff: TStream;
+  vArchive: TJclDecompressArchive;
+  ArchiveClass: TJclDecompressArchiveClass;
 begin
   lbAPKDisplayName.Caption := FApkInfo.DisplayName;
   lbCapabilities.Caption := 'Capabilities';
   lbVersion.Caption := 'Version: ' + FApkInfo.DisplayVersion;
-  lbPublisher.Caption := 'Icon: ' + FApkInfo.Icon;
+//  lbPublisher.Caption := 'Icon: ' + FApkInfo.Icon;
   apkInstallerMemo.Lines := FApkPermissions;
 
   // just a dummy ficticious path to use extractfilename, extractfileext, etc.
@@ -207,12 +210,13 @@ begin
   else  // Open .APK file as ZipFile, list contents and try to find an icon that match some brute force search
   if (FApkInfo.Icon <> '') and (FZipContents.Count = 0) then
   begin
-    zip := TZipFile.Create;
+    {zip := TZipFile.Create;
     try
       if TZipFile.IsValid(FApkFile) then
       begin
         zip.Open(FApkFile, zmRead);
-        for I := Low(zip.FileNames) to High(zip.FileNames) - 1 do
+    //    for I := Low(zip.FileNames) to High(zip.FileNames) - 1 do
+        for I := 0 to zip.FileCount - 1 do
         begin
           FZipContents.Add(zip.FileNames[I]);
         end;
@@ -220,6 +224,36 @@ begin
       end;
     finally
       zip.Free;
+    end;}// replaced with 7zip, since TZipFile is too slow
+    vArchive := TJclZipDecompressArchive.Create(FApkFile, 0, False);
+    try
+      // if e.g. icon_launcher.xml most likely we would like to find icon_launcher.png instead
+      var pngName := ExtractFileName(ChangeFileExt(dummypath, '.png'));
+      vArchive.ListFiles;
+      for I := 0 to vArchive.ItemCount - 1 do
+      begin
+        if not vArchive.Items[I].Directory then
+        begin
+          picBuff := TMemoryStream.Create;
+          try
+            if string(vArchive.Items[I].PackedName).Contains(pngName) then
+            begin
+              vArchive.Items[I].Stream := picBuff;
+              vArchive.Items[I].OwnsStream := False;
+              vArchive.Items[I].Selected := True;
+              vArchive.ExtractSelected();
+              vArchive.Items[I].Selected := False;
+              picBuff.Position := 0;
+              eApkImage.Picture.LoadFromStream(picBuff);
+              //Break; // that's it. { TODO : search other ones, extract them and pick the highest quality one }
+            end;
+          finally
+            picBuff.Free;
+          end;
+        end;
+      end;
+    finally
+      FreeAndNil(vArchive);
     end;
   end;
 end;
@@ -233,6 +267,17 @@ end;
 procedure TfrmInstaller.FormClick(Sender: TObject);
 begin
   pnlAbout.Visible := False;
+end;
+
+procedure TfrmInstaller.FormClose(Sender: TObject; var Action: TCloseAction);
+begin
+  // clear labels and picture on close
+  lbAPKDisplayName.Caption := '';
+  lbPublisher.Caption := 'Publisher: ';
+  lbVersion.Caption := 'Version: ';
+  lbCertificate.Caption := '';
+  apkInstallerMemo.Lines.Clear;
+  eApkImage.Picture := nil;
 end;
 
 procedure TfrmInstaller.FormCreate(Sender: TObject);
@@ -255,6 +300,7 @@ procedure TfrmInstaller.GetAPKInfoWithAndroidAssetPackagingTool;
 var
   cmdline: string;
 begin
+  eApkImage.Picture := nil;
   if FileExists(ExtractFilePath(ParamStr(0))+ 'aapt.exe') then
   begin
     cmdline := 'aapt.exe d badging "' + FApkFile + '"';
@@ -277,7 +323,7 @@ var
   buff: TBytes;
   picBuff: TStream;
 begin
-
+  eApkImage.Picture := nil;
   //extract manifest.json from *.xapk to read its info
 
   zip := TZipFile.Create;
