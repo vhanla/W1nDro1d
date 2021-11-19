@@ -210,22 +210,32 @@ begin
   else  // Open .APK file as ZipFile, list contents and try to find an icon that match some brute force search
   if (FApkInfo.Icon <> '') and (FZipContents.Count = 0) then
   begin
-    {zip := TZipFile.Create;
+    zip := TZipFile.Create;
     try
       if TZipFile.IsValid(FApkFile) then
       begin
         zip.Open(FApkFile, zmRead);
-    //    for I := Low(zip.FileNames) to High(zip.FileNames) - 1 do
-        for I := 0 to zip.FileCount - 1 do
+        var pngName := ExtractFileName(ChangeFileExt(dummypath, '.png'));
+        for var filename in zip.FileNames do
         begin
-          FZipContents.Add(zip.FileNames[I]);
+          if filename.Contains(pngName) then
+          begin
+          //load icon
+            picBuff := TStream.Create;
+            try
+              zip.Read(filename, picBuff, zipHeader);
+              eApkImage.Picture.LoadFromStream(picBuff);
+            finally
+              picBuff.Free;
+            end;
+          end;
         end;
-        apkInstallerMemo.Lines := FZipContents;
+
       end;
     finally
       zip.Free;
-    end;}// replaced with 7zip, since TZipFile is too slow
-    vArchive := TJclZipDecompressArchive.Create(FApkFile, 0, False);
+    end;// replaced with 7zip, since TZipFile is too slow
+{    vArchive := TJclZipDecompressArchive.Create(FApkFile, 0, False);
     try
       // if e.g. icon_launcher.xml most likely we would like to find icon_launcher.png instead
       var pngName := ExtractFileName(ChangeFileExt(dummypath, '.png'));
@@ -245,7 +255,7 @@ begin
               vArchive.Items[I].Selected := False;
               picBuff.Position := 0;
               eApkImage.Picture.LoadFromStream(picBuff);
-              //Break; // that's it. { TODO : search other ones, extract them and pick the highest quality one }
+              //Break; // that's it.  TODO : search other ones, extract them and pick the highest quality one
             end;
           finally
             picBuff.Free;
@@ -254,7 +264,7 @@ begin
       end;
     finally
       FreeAndNil(vArchive);
-    end;
+    end;}
   end;
 end;
 
