@@ -3,7 +3,7 @@ unit helperFuncs;
 interface
 
 uses
-  System.SysUtils;
+  System.SysUtils, Winapi.ShlObj;
 
   function ExtractDomain(AUrl : string) : string;
   function FormatFileSize(AValue: Int64): string;
@@ -15,10 +15,12 @@ uses
   function GetExeCertCompanyName(const FileName: string): string;
   function FileVersionGet( const sgFileName : string ) : string;
 
+  function IsImmersivePidl(pidl: PItemIdList): Boolean;
+
 implementation
 
 uses
-  Winapi.DwmApi, Winapi.Windows;
+  Winapi.DwmApi, Winapi.Windows, Winapi.KnownFolders;
 
 const
   ACCENT_DISABLED = 0;
@@ -360,5 +362,17 @@ begin
   end;
 end;
 
+function IsImmersivePidl(pidl: PItemIdList): Boolean;
+var
+  pPIDL: PItemIDList;
+  v2: BOOL;
+begin
+  Result := False;
+  if SHGetKnownFolderIDList(FOLDERID_AppsFolder, $4000, 0, pPIDL) >= 0 then
+  begin
+    Result := ILIsParent(pPIDL, pidl, True);
+    ILFree(pPIDL);
+  end;
+end;
 
 end.

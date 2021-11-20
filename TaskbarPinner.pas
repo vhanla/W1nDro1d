@@ -142,7 +142,7 @@ type
     procedure SetOnTaskbarPinChange(const Value: TOnTaskbarPinChange);
     function GetPinnedList: TStrings;
   public
-
+    function PinLnk(lnkPath: string; UnPinIfPinned: Boolean = False): Boolean;
   published
     property OnTaskbarPinChange: TOnTaskbarPinChange read FOnTaskbarPinChange write SetOnTaskbarPinChange;
     property Items: TStrings read GetPinnedList;
@@ -150,11 +150,93 @@ type
 
 implementation
 
+uses
+  helperFuncs;
+
 { TTaskbarPinner }
 
 function TTaskbarPinner.GetPinnedList: TStrings;
+var
+  hr: HRESULT;
+  vPinList: IPinnedList3;
+  vEnumList: IEnumFullIDList;
+  vPIDL: PItemIDList;
+  vFileInfo: TSHFileInfoW;
+  ul: ULONG;
+  pn: array[0..1024] of char;
 begin
+  hr := ActiveX.CoCreateInstance(CLSID_TaskbandPin, nil, CLSCTX_INPROC_SERVER, IID_IPinnedList3, vPinList);
+  if hr = S_OK then
+  begin
+    hr := vPinList.EnumObjects(vEnumList);
+    if hr = S_OK then
+    begin
+      hr := vEnumList.Reset;
+      ul := 0;
+      repeat
+        hr := vEnumList.Next(1, vPIDL, ul);
+        if hr = S_OK then
+        begin
+          FillChar(vFileInfo, SizeOf(vFileInfo), 0);
+          ul := SHGetFileInfo(PChar(vPIDL), 0, vFileInfo, SizeOf(vFileInfo), SHGFI_PIDL or SHGFI_DISPLAYNAME);
+          if ul > 0 then
+          begin
+            SHGetPathFromIDList(vPIDL, pn);
+            var strName := string(pn); // fullpath to .lnk location
+            if IsImmersivePidl(vPIDL) then
+              Result.AddPair(vFileInfo.szDisplayName, 'UWP')
+            else
+              Result.AddPair(vFileInfo.szDisplayName, strName);
+            CoTaskMemFree(vPIDL);
+          end;
+        end;
 
+      until hr <> S_OK;
+    end;
+
+  end;
+
+end;
+
+function TTaskbarPinner.PinLnk(lnkPath: string;
+  UnPinIfPinned: Boolean): Boolean;
+var
+  hr: HRESULT;
+  vPinList: IPinnedList3;
+  vPIDL: PItemIDList;
+  vBuff: array[0..1024] of WideChar;
+  cc: Cardinal;
+begin
+  CoInitialize(nil);
+
+  Result := False;
+
+  hr := ActiveX.CoCreateInstance(CLSID_TaskbandPin, nil, CLSCTX_INPROC_SERVER, IID_IPinnedList3, vPinList);
+  if Succeeded(hr) then
+  begin
+    StringToWideChar(lnkPath, vBuff, (High(vBuff) - Low(vBuff) + 1));
+    vPIDL := ILCreateFromPath(@vBuff);
+    try
+      hr := vPinList.IsPinned(PCIDLIST_ABSOLUTE(vPIDL));
+      if hr = S_OK then
+      begin
+        if UnPinIfPinned then
+          hr := vPinList.Modify(PCIDLIST_ABSOLUTE(vPIDL), nil, PLMC_EXPLORER);
+      end
+      else
+        hr := vPinList.Modify(nil, PCIDLIST_ABSOLUTE(vPIDL), PLMC_EXPLORER);
+
+      if Succeeded(hr) then
+      begin
+        vPinList.GetChangeCount(cc); // should we notify registry changed? #TODO
+        Result := True;
+      end;
+    finally
+      ILFree(vPIDL);
+    end;
+  end;
+
+  CoUninitialize;
 end;
 
 procedure TTaskbarPinner.SetOnTaskbarPinChange(
