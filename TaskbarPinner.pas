@@ -138,14 +138,18 @@ type
 
   TTaskbarPinner = class (TObject)
   private
+    FPinList: TStringList;
     FOnTaskbarPinChange: TOnTaskbarPinChange;
     procedure SetOnTaskbarPinChange(const Value: TOnTaskbarPinChange);
-    function GetPinnedList: TStrings;
+    function GetPinnedList: TStringList;
   public
     function PinLnk(lnkPath: string; UnPinIfPinned: Boolean = False): Boolean;
+
+    constructor Create;
+    destructor Destroy; override;
   published
     property OnTaskbarPinChange: TOnTaskbarPinChange read FOnTaskbarPinChange write SetOnTaskbarPinChange;
-    property Items: TStrings read GetPinnedList;
+    property Items: TStringList read GetPinnedList;
   end;
 
 implementation
@@ -155,7 +159,19 @@ uses
 
 { TTaskbarPinner }
 
-function TTaskbarPinner.GetPinnedList: TStrings;
+constructor TTaskbarPinner.Create;
+begin
+  FPinList := TStringList.Create;
+end;
+
+destructor TTaskbarPinner.Destroy;
+begin
+  FPinList.Free;
+
+  inherited;
+end;
+
+function TTaskbarPinner.GetPinnedList: TStringList;
 var
   hr: HRESULT;
   vPinList: IPinnedList3;
@@ -165,6 +181,11 @@ var
   ul: ULONG;
   pn: array[0..1024] of char;
 begin
+  Result := nil;
+  if not Assigned(FPinList) then Exit;
+
+  FPinList.BeginUpdate;
+  FPinList.Clear;
   hr := ActiveX.CoCreateInstance(CLSID_TaskbandPin, nil, CLSCTX_INPROC_SERVER, IID_IPinnedList3, vPinList);
   if hr = S_OK then
   begin
@@ -184,9 +205,9 @@ begin
             SHGetPathFromIDList(vPIDL, pn);
             var strName := string(pn); // fullpath to .lnk location
             if IsImmersivePidl(vPIDL) then
-              Result.AddPair(vFileInfo.szDisplayName, 'UWP')
+              FPinList.AddPair(vFileInfo.szDisplayName, 'UWP')
             else
-              Result.AddPair(vFileInfo.szDisplayName, strName);
+              FPinList.AddPair(vFileInfo.szDisplayName, strName);
             CoTaskMemFree(vPIDL);
           end;
         end;
@@ -195,7 +216,8 @@ begin
     end;
 
   end;
-
+  FPinList.EndUpdate;
+  Result := FPinList;
 end;
 
 function TTaskbarPinner.PinLnk(lnkPath: string;
