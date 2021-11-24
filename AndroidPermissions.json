@@ -1,0 +1,23 @@
+{
+  "permissions" :[
+    {
+      "title": "Make phone calls",
+      "shortDesc": "Services that cost you money",
+      "URI": "android.permission.CALL_PHONE",
+      "risk": "HIGH",
+      "protectionLevel": "DANGEROUS",
+      "officialDesc": "Allows an application to initiate a phone call without going through the Dialer user interface for the user to confirm the call being placed.",
+      "details": "This permission is of high importance. This could let an application call a 1-900 number and charge you money. However, this is not as common a way to cheat people in today's world as it used to be. Legitimate applications that use this include: Google Voice and Google Maps.\nAnother important point to note here is that any app can launch the phone screen and pre-fill a number for you. However, in order to make the call, you would need to press [Send] or [Call] yourself. The difference with this permission is that an app could make the entire process automatic and hidden."    
+    },
+    {
+      "title": "Send SMS or MMS",
+      "shortDesc": "Services that cost you money",
+      "URI": "android.permission.SEND_SMS",
+      "risk": "HIGH",
+      "protectionLevel": "DANGEROUS",
+      "officialDesc": "Allows an application to send SMS messages.",
+      "details": "This permission is of high importance. This could let an application send an SMS on your behalf, and much like the phone call permission, it could cost you money by sending SMS to for-pay numbers. Certain SMS numbers work much like 1-900 numbers and automatically charge your phone company money when you send them an SMS."
+      
+    }
+  ]
+}
