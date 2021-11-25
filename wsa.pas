@@ -169,6 +169,8 @@ var
   pidAbsolute: PItemIDList;
   celtFetched: ULONG;
   fileInfo: SHFILEINFOW;
+
+  vAPK: PAPK;
 begin
   CoInitialize(nil);
 
@@ -200,6 +202,7 @@ begin
                   if psfDesktop.BindToObject(pidControl, nil, IID_IShellFolder, psfControl) = S_OK then
                     if psfControl.EnumObjects(0, SHCONTF_NONFOLDERS or SHCONTF_INCLUDEHIDDEN, pEnumList) S_OK then
                     begin
+                      GetMem(vAPK, SizeOf(TAPK));
                       while pEnumList.Next(1, pidChild, celtFetched) = 0 do
                       begin
                         pidAbsolute := ILCombine(pidControl, pidChild);
@@ -243,7 +246,8 @@ begin
                               begin
                                 Item := TStrings.Create;
                                 try
-
+                                  vAPK.DisplayName := fileInfo.szDisplayName;
+                                  vAPK
                                 finally
                                   Item.Free;
                                 end;
