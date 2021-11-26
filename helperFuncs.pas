@@ -17,6 +17,8 @@ uses
 
   function IsImmersivePidl(pidl: PItemIdList): Boolean;
 
+  function IsValidAppPackageName(value: string): Boolean;
+
 implementation
 
 uses
@@ -373,6 +375,53 @@ begin
     Result := ILIsParent(pPIDL, pidl, True);
     ILFree(pPIDL);
   end;
+end;
+
+//https://developer.android.com/guide/topics/manifest/manifest-element#package
+function IsValidAppPackageName(value: string): Boolean;
+const
+  VALIDCHARS='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._';
+var
+  ch: PChar;
+  I: Integer;
+  dotsCounter: Integer;
+  dotsoffset: Integer;
+begin
+  dotsCounter := 0;
+  dotsoffset := 0;
+  Result := True;
+  I := 1; // first char must be A_Z only
+  if value[I] in ['A'..'Z', 'a'..'z'] then
+  begin
+    for I := 2 to value.Length do
+    begin
+      if value[I] = '.' then
+      begin
+        Inc(dotsCounter);
+        if dotsoffset = 0 then
+          dotsoffset := I;
+      end;
+
+      if not(value[I] in ['A'..'Z','a'..'z','0'..'9','_','.']) then
+        Result := False;
+
+      if (value[I-1] = '.') and (value[I] = '.') // two consecutive dots are not allowed
+      then
+        Result := False;
+
+      if not Result then Break;
+    end;
+    if Result and (dotsCounter < 2) then
+      Result := False;
+    // hacky (bad) way to ignore other windows apps like Microsoft.Windows.Explorer
+    // since they also use its AppUserModelID similarly to an Android Package Name
+    // but most Android apps tend to use com. tv. org. net. etc which are shorter Microsoft.
+    { TODO : compare to ADB's list result better, but we need to install/configure its path first }
+    if (dotsoffset > 4) or (dotsoffset < 2) then
+      Result := False;
+  end
+  else
+    Result := False;
 end;
 
 end.
