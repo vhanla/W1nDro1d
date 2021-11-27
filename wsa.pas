@@ -78,7 +78,7 @@ implementation
 
 uses
   Winapi.ShlObj, Winapi.ActiveX, Winapi.KnownFolders, Winapi.ShellAPI,
-  Winapi.PropKey, Vcl.Graphics, System.SysUtils;
+  Winapi.PropKey, Vcl.Graphics, System.SysUtils, helperFuncs;
 
 { TWSA }
 
@@ -200,7 +200,7 @@ begin
               if SHGetDesktopFolder(dt) = S_OK then
                 if knownfoldernative.GetIDList(KF_FLAG_DEFAULT, pidControl) = S_OK then
                   if psfDesktop.BindToObject(pidControl, nil, IID_IShellFolder, psfControl) = S_OK then
-                    if psfControl.EnumObjects(0, SHCONTF_NONFOLDERS or SHCONTF_INCLUDEHIDDEN, pEnumList) S_OK then
+                    if psfControl.EnumObjects(0, SHCONTF_NONFOLDERS or SHCONTF_INCLUDEHIDDEN, pEnumList) = S_OK then
                     begin
                       GetMem(vAPK, SizeOf(TAPK));
                       while pEnumList.Next(1, pidChild, celtFetched) = 0 do
@@ -247,7 +247,8 @@ begin
                                 Item := TStrings.Create;
                                 try
                                   vAPK.DisplayName := fileInfo.szDisplayName;
-                                  vAPK
+                                  vAPK.AndroidPackageName := sa;
+                                  FInstalledApps.Add(vAPK);
                                 finally
                                   Item.Free;
                                 end;
