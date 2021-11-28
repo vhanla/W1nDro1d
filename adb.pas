@@ -3,7 +3,7 @@ unit adb;
 interface
 
 uses
-  Winapi.Windows, System.Win.ScktComp;
+  Winapi.Windows, System.Win.ScktComp, DosCommand;
 
 const
     AP_VERY_HIGH = 0;
@@ -85,6 +85,9 @@ type
     FClient: TClientSocket;
     FPort: Integer;
     FHost: string;
+
+    FCmd: TDosCommand;
+
     procedure SetPath(const Value: string);
     procedure SetHost(const Value: string);
     procedure SetPort(const Value: Integer);
@@ -134,10 +137,13 @@ begin
   FClient.OnError := OnSocketError;
   FClient.OnDisconnect := OnSocketDisconnect;
   FClient.OnRead := OnSocketRead;
+
+  FCmd := TDosCommand.Create(nil);
 end;
 
 destructor TADB.Destroy;
 begin
+  FCmd.Free;
   FClient.Free;
   inherited;
 end;
