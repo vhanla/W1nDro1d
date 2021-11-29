@@ -15,7 +15,7 @@ uses
   DosCommand, Net.HTTPClient, Winapi.IpHlpApi, Vcl.Imaging.pngimage,
   Vcl.BaseImageCollection, Vcl.ImageCollection, Data.DB, Datasnap.DBClient,
   Vcl.ComCtrls, DragDrop, DropTarget, DragDropFile, System.Notification,
-  adb;
+  adb, RegChangeThread, TaskbarPinner;
 
 const  // hard coded paths, for now located in the same directory where this application runs
   INIFILE = 'settings.ini';
@@ -199,6 +199,7 @@ type
     edADBPort: TEdit;
     edADBSocketCommand: TEdit;
     btnShellCommand: TButton;
+    PintoTaskbar1: TMenuItem;
     procedure Exit1Click(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure FormCreate(Sender: TObject);
@@ -240,6 +241,7 @@ type
       Shift: TShiftState; X, Y: Integer);
     procedure btnShellCommandClick(Sender: TObject);
     procedure pnlDropDblClick(Sender: TObject);
+    procedure PintoTaskbar1Click(Sender: TObject);
   protected
     // TaskbarLocation
     function GetMainTaskbarPosition: Integer;
@@ -247,7 +249,6 @@ type
     function GetWSAInstallationPath(amui: string): string;
 
     function ReplaceAmazonAppstore: Boolean;
-    function IsValidAppPackageName(value: string): Boolean;
     { TODO : In Progress, Shell:AppsFolder items can resolve to lnk files at Shell:Programs directory, we need to do that }
     function IsWsaClientLnkTarget(value: string): Boolean;
     function IsWsaClientRunning:Boolean;
@@ -272,11 +273,19 @@ type
     ControlListFiltered: Boolean;
     AppList: TStringList;
     AppListSearchFilter: TStringList;
+
+    // Handle WSA apps un/pinning on Taskbar
+    FPinMonitor: TRegMon;
+    FPinnedLnkList: TStringList;
+    FPinner: TTaskbarPinner;
+    procedure MonitorPinRegistry(Sender: TObject);
   public
     { Public declarations }
     ApkInfo: TAPKInfo;
     ADB: TADB;
     procedure APKLaunch(const PackageName: string; specialUri: string = '/launch wsa://');
+
+    procedure PinMonitor(var Msg: TMessage); message WM_REGKEYCHANGE;
   end;
 
 var
@@ -548,6 +557,7 @@ var
   isFileSystem: Boolean;
   fd: TKnownFolderDefinition;
   Item: TStrings;
+  fPath: array[0..1024] of Char;
 begin
   if ActivityIndicator1.Animate then Exit;
 
@@ -614,14 +624,16 @@ begin
               begin
                 pidAbsolute := ILCombine(pidControl, pidChild);
                 OleCheck(dt.BindToObject(pidControl, nil, IID_IShellFolder2, Pointer(pc)));
-                var sa,lnk: OleVariant;
+                var sa,lnk, flnk: OleVariant;
     //            var cs: SHCOLUMNID;
     //            cs.fmtid := StringToGUID('{9F4C2855-9F79-4B39-A8D0-E1D42DE1D5F3}');
     //            cs.pid := 5;
                 OleCheck((pc.GetDetailsEx(pidChild, SHCOLUMNID(PKEY_AppUserModel_ID), @sa)));
                 var re:HRESULT;
                 try
+                  re := (pc.GetDetailsEx(pidChild, SHCOLUMNID(PKEY_Link_Arguments), @flnk));
                   re := (pc.GetDetailsEx(pidChild, SHCOLUMNID(PKEY_Link_TargetParsingPath), @lnk));
+                  SHGetPathFromIDList(pidAbsolute, fPath);
                 except
                   lnk := '';
                 end;
@@ -698,7 +710,7 @@ begin
                         ims.Free;
                       end;
 
-                      AppsClasses.AddPair(sa, sa);
+                      AppsClasses.AddPair(sa, string(flnk));
                     finally
                       Item.Free;
                     end;
@@ -997,10 +1009,25 @@ begin
     gbADBinfo.Caption := 'ADB not found!';
 
   LoadINI;
+
+  FPinner := TTaskbarPinner.Create;
+  FPinnedLnkList := TStringList.Create;
+  FPinMonitor := TRegMon.Create(Self);
+  FPinMonitor.MonitoredKey := 'Software\Microsoft\Windows\CurrentVersion\Explorer\Taskband';
+  FPinMonitor.WatchSubKeys := False;
+  FPinMonitor.OnChange := MonitorPinRegistry;
+  FPinMonitor.Activate;
+
+  FPinner.Items;
 end;
 
 procedure TfrmWinDroid.FormDestroy(Sender: TObject);
 begin
+  FPinMonitor.Deactivate;
+  FPinMonitor.Free;
+  FPinnedLnkList.Free;
+  FPinner.Free;
+
   ADB.Free;
 //  DestroyBlurBackground;
   StopHook;
@@ -1298,53 +1325,6 @@ begin
   end;
 end;
 
-//https://developer.android.com/guide/topics/manifest/manifest-element#package
-function TfrmWinDroid.IsValidAppPackageName(value: string): Boolean;
-const
-  VALIDCHARS='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._';
-var
-  ch: PChar;
-  I: Integer;
-  dotsCounter: Integer;
-  dotsoffset: Integer;
-begin
-  dotsCounter := 0;
-  dotsoffset := 0;
-  Result := True;
-  I := 1; // first char must be A_Z only
-  if value[I] in ['A'..'Z', 'a'..'z'] then
-  begin
-    for I := 2 to value.Length do
-    begin
-      if value[I] = '.' then
-      begin
-        Inc(dotsCounter);
-        if dotsoffset = 0 then
-          dotsoffset := I;
-      end;
-
-      if not(value[I] in ['A'..'Z','a'..'z','0'..'9','_','.']) then
-        Result := False;
-
-      if (value[I-1] = '.') and (value[I] = '.') // two consecutive dots are not allowed
-      then
-        Result := False;
-
-      if not Result then Break;
-    end;
-    if Result and (dotsCounter < 2) then
-      Result := False;
-    // hacky (bad) way to ignore other windows apps like Microsoft.Windows.Explorer
-    // since they also use its AppUserModelID similarly to an Android Package Name
-    // but most Android apps tend to use com. tv. org. net. etc which are shorter Microsoft.
-    { TODO : compare to ADB's list result better, but we need to install/configure its path first }
-    if (dotsoffset > 4) or (dotsoffset < 2) then
-      Result := False;
-  end
-  else
-    Result := False;
-end;
-
 // Verify that lnk located at
 function TfrmWinDroid.IsWsaClientLnkTarget(value: string): Boolean;
 var
@@ -1428,6 +1408,11 @@ begin
   end;
 end;
 
+procedure TfrmWinDroid.MonitorPinRegistry(Sender: TObject);
+begin
+  FPinner.Items;
+end;
+
 procedure TfrmWinDroid.NoBorder(var Msg: TWMNCActivate);
 begin
   Msg.Active := False;
@@ -1437,6 +1422,26 @@ end;
 procedure TfrmWinDroid.OpenWSAInstallationFolder1Click(Sender: TObject);
 begin
   ShellExecute(0, 'OPEN', 'explorer.exe', PChar(GetWSAInstallationPath(WSA.AppUserModelID)), nil, SW_SHOWNORMAL);
+end;
+
+procedure TfrmWinDroid.PinMonitor(var Msg: TMessage);
+begin
+
+end;
+
+procedure TfrmWinDroid.PintoTaskbar1Click(Sender: TObject);
+begin
+  if (ControlListIndex >= 0) and (ControlList1.ItemCount > 0)
+  then
+  begin
+    if ControlListFiltered then
+      ShowMessage(AppsClasses.Names[ControlListIndex])
+    else
+    begin
+      ShowMessage(AppsClasses.ValueFromIndex[ControlListIndex])
+    end;
+
+  end;
 end;
 
 procedure TfrmWinDroid.pnlDropDblClick(Sender: TObject);
