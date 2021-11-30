@@ -31,7 +31,7 @@ object frmWinDroid: TfrmWinDroid
     Width = 368
     Height = 415
     Align = alClient
-    ActiveCard = crdSettings
+    ActiveCard = crdInstaller
     BevelOuter = bvNone
     TabOrder = 0
     object crdApps: TCard
@@ -212,6 +212,7 @@ object frmWinDroid: TfrmWinDroid
         BevelOuter = bvLowered
         Caption = 'Drop APK/XAPK here...'
         TabOrder = 0
+        OnDblClick = pnlDropDblClick
       end
     end
     object crdMisc: TCard
@@ -1369,6 +1370,10 @@ object frmWinDroid: TfrmWinDroid
     object SearchUpdates1: TMenuItem
       Caption = 'Search Updates'
       OnClick = SearchUpdates1Click
+    end
+    object PintoTaskbar1: TMenuItem
+      Caption = 'Un/Pin to Taskbar'
+      OnClick = PintoTaskbar1Click
     end
     object N4: TMenuItem
       Caption = '-'
