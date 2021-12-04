@@ -15,7 +15,7 @@ uses
   DosCommand, Net.HTTPClient, Winapi.IpHlpApi, Vcl.Imaging.pngimage,
   Vcl.BaseImageCollection, Vcl.ImageCollection, Data.DB, Datasnap.DBClient,
   Vcl.ComCtrls, DragDrop, DropTarget, DragDropFile, System.Notification,
-  adb, RegChangeThread, TaskbarPinner;
+  adb, RegChangeThread, TaskbarPinner, wsa;
 
 const  // hard coded paths, for now located in the same directory where this application runs
   INIFILE = 'settings.ini';
@@ -45,7 +45,7 @@ type
     UninstalString: string;
   end;
 
-  TWSA = record
+  TWSAStruct = record
     InstallPath: string;
     AppUserModelID: string;
     Version: string;
@@ -200,6 +200,7 @@ type
     edADBSocketCommand: TEdit;
     btnShellCommand: TButton;
     PintoTaskbar1: TMenuItem;
+    CheckNewWSAversion1: TMenuItem;
     procedure Exit1Click(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure FormCreate(Sender: TObject);
@@ -240,8 +241,8 @@ type
     procedure pnlWSAStateMouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
     procedure btnShellCommandClick(Sender: TObject);
-    procedure pnlDropDblClick(Sender: TObject);
     procedure PintoTaskbar1Click(Sender: TObject);
+    procedure CheckNewWSAversion1Click(Sender: TObject);
   protected
     // TaskbarLocation
     function GetMainTaskbarPosition: Integer;
@@ -268,7 +269,8 @@ type
   private
     { Private declarations }
     FBlurBackground: HWND;
-    WSA: TWSA;
+    WSA: TWSAStruct;
+    WSAM: TWSA;
     ControlListIndex: Integer;
     ControlListFiltered: Boolean;
     AppList: TStringList;
@@ -775,6 +777,11 @@ begin
 //  ShellExecute(0, 'OPEN', PChar(ADB.Path), PChar(edADBSocketCommand.Text), nil, SW_SHOWNORMAL);
 end;
 
+procedure TfrmWinDroid.CheckNewWSAversion1Click(Sender: TObject);
+begin
+  GetCurrentWSAVersionFromStore;
+end;
+
 procedure TfrmWinDroid.CheckWsaClientStatus;
 var
   state: Boolean;
@@ -1019,10 +1026,16 @@ begin
   FPinMonitor.Activate;
 
   FPinner.Items;
+
+  WSAM := TWSA.Create;
+
+
 end;
 
 procedure TfrmWinDroid.FormDestroy(Sender: TObject);
 begin
+  WSAM.Free;
+
   FPinMonitor.Deactivate;
   FPinMonitor.Free;
   FPinnedLnkList.Free;
@@ -1442,11 +1455,6 @@ begin
     end;
 
   end;
-end;
-
-procedure TfrmWinDroid.pnlDropDblClick(Sender: TObject);
-begin
-  GetCurrentWSAVersionFromStore;
 end;
 
 procedure TfrmWinDroid.pnlWSAStateMouseDown(Sender: TObject;
