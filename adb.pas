@@ -134,7 +134,7 @@ begin
   FPort := 5037; // default ADB socket port
   FHost := '127.0.0.1'; // localhost
 
-  FClient.OnError := OnSocketError;
+//  FClient.OnError := OnSocketError;
   FClient.OnDisconnect := OnSocketDisconnect;
   FClient.OnRead := OnSocketRead;
 
@@ -201,12 +201,14 @@ end;
 
 function TADB.StartServer(forceRestart: Boolean): Boolean;
 begin
-
+  FCmd.CommandLine := 'adb.exe start-server';
+  FCmd.Execute;
 end;
 
 function TADB.StopServer: Boolean;
 begin
-
+  FCmd.CommandLine := 'adb.exe kill-server';
+  FCmd.Execute;
 end;
 
 end.
