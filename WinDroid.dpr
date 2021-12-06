@@ -19,7 +19,10 @@ uses
   frmBrowser in 'frmBrowser.pas' {frmWeb},
   helperFuncs in 'helperFuncs.pas',
   adb in 'adb.pas',
-  frmApkViewer in 'frmApkViewer.pas' {frmApkViewerWnd};
+  frmApkViewer in 'frmApkViewer.pas' {frmApkViewerWnd},
+  RegChangeThread in 'RegChangeThread.pas',
+  TaskbarPinner in 'TaskbarPinner.pas',
+  wsa in 'wsa.pas';
 
 {$R *.res}
 
