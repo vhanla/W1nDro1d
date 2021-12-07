@@ -59,10 +59,13 @@ type
     procedure ListView1DblClick(Sender: TObject);
     procedure VirtualExplorerListview1DblClick(Sender: TObject);
     procedure FileListBox1DblClick(Sender: TObject);
+    procedure WebBrowser1DocumentComplete(ASender: TObject;
+      const pDisp: IDispatch; const URL: OleVariant);
   private
     { Private declarations }
     procedure BeforeFileDownload(Sender: TObject; const FileSource: WideString;
       var Allowed: Boolean);
+    function getAPKversion: string;
   public
     { Public declarations }
   end;
@@ -74,7 +77,7 @@ implementation
 
 uses
   System.Net.HttpClient, {IdHTTP,} helperFuncs,
-  frmApkInstaller;
+  frmApkInstaller, MSHTML;
 
 {$R *.dfm}
 
@@ -133,7 +136,7 @@ begin
         UWPDownloader1.Detail := fName;
         UWPDownloader1.URL := LUrl;
         UWPDownloader1.DoStartDownload;
-        PageControl1.SelectNextPage(True);
+//        PageControl1.SelectNextPage(True);
       end;
     end;
   finally
@@ -171,6 +174,11 @@ begin
   end;
 end;
 
+function TfrmWeb.getAPKversion: string;
+begin
+  result := OleVariant((WebBrowser1.Document as IHTMLDocument2).parentWindow.document).page_config.info.version_name;
+end;
+
 procedure TfrmWeb.ListView1DblClick(Sender: TObject);
 begin
 //  frmInstaller.FApkFile := ListView1.Items[ListView1.ItemIndex].;
@@ -196,6 +204,13 @@ begin
 end;
 
 // prevent opening links in MSEdge
+procedure TfrmWeb.WebBrowser1DocumentComplete(ASender: TObject;
+  const pDisp: IDispatch; const URL: OleVariant);
+begin
+  if string(URL).Contains('apkpure.com/en/') then
+    Caption := 'Latest version: ' + getAPKversion;
+end;
+
 procedure TfrmWeb.WebBrowser1NewWindow2(ASender: TObject; var ppDisp: IDispatch;
   var Cancel: WordBool);
 begin
