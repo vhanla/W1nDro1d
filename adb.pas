@@ -115,6 +115,9 @@ type
 
 implementation
 
+uses
+  Winapi.PsAPI, Winapi.TlHelp32;
+
 { TADB }
 
 function TADB.ConnectSocket(port: Integer = 5037): Boolean;
@@ -152,6 +155,9 @@ end;
 
 // Get a list of adb.exe processes' fullpath
 procedure TADB.GetADBProcessList(var PidList: TStringList);
+var
+  hSnap: THandle;
+  pe: TProcessEntry32;
 begin
 
 end;
