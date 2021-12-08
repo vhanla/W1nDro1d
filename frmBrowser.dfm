@@ -20,7 +20,7 @@ object frmWeb: TfrmWeb
     Top = 0
     Width = 704
     Height = 485
-    ActivePage = TabSheet2
+    ActivePage = TabSheet1
     Align = alClient
     TabOrder = 0
     object TabSheet1: TTabSheet
@@ -33,6 +33,7 @@ object frmWeb: TfrmWeb
         Align = alClient
         TabOrder = 0
         OnNewWindow2 = WebBrowser1NewWindow2
+        OnDocumentComplete = WebBrowser1DocumentComplete
         ExplicitWidth = 702
         ExplicitHeight = 483
         ControlData = {
