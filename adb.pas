@@ -3,7 +3,7 @@ unit adb;
 interface
 
 uses
-  Winapi.Windows, System.Win.ScktComp, DosCommand;
+  Winapi.Windows, System.Win.ScktComp, DosCommand, System.Classes;
 
 const
     AP_VERY_HIGH = 0;
@@ -103,6 +103,8 @@ type
     function ConnectSocket(port: Integer = 5037): Boolean;
     function RunScript(const command: string): string;
 
+    procedure GetADBProcessList(var PidList: TStringList);
+
     constructor Create;
     destructor Destroy; override;
 
@@ -146,6 +148,12 @@ begin
   FCmd.Free;
   FClient.Free;
   inherited;
+end;
+
+// Get a list of adb.exe processes' fullpath
+procedure TADB.GetADBProcessList(var PidList: TStringList);
+begin
+
 end;
 
 function TADB.IsADBServerOn: Boolean;
